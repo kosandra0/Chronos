@@ -1,0 +1,86 @@
+{
+  "name": "chronos-windows-usage-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chronos Windows screen-time and application usage intelligence",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "desktop:package": "npm run build && electron-builder --win nsis portable --x64",
+    "desktop:package:installer": "npm run build && electron-builder --win nsis --x64",
+    "desktop:package:portable": "npm run build && electron-builder --win portable --x64"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "drizzle-orm": "0.45.2",
+    "framer-motion": "^14.14.0",
+    "lucide-react": "^1.76.0",
+    "next": "16.4.2",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "recharts": "^3.11.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.17",
+    "@types/node": "22.19.15",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "electron": "45.4.1",
+    "electron-builder": "26.18.1",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.4.2",
+    "postcss": "8.5.23",
+    "tailwindcss": "4.1.17",
+    "typescript": "5.9.3"
+  },
+  "build": {
+    "appId": "com.chronos.usage-monitor",
+    "productName": "Chronos",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/standalone",
+        "to": "chronos-server"
+      },
+      {
+        "from": ".next/static",
+        "to": "chronos-server/.next/static"
+      },
+      {
+        "from": "agent/chronos-agent.ps1",
+        "to": "agent/chronos-agent.ps1"
+      }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Chronos",
+      "runAfterFinish": true
+    },
+    "portable": {
+      "artifactName": "Chronos-Portable-${version}-${arch}.${ext}"
+    }
+  }
+}
