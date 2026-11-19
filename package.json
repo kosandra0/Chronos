@@ -10,9 +10,10 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "desktop:package": "npm run build && electron-builder --win nsis portable --x64",
-    "desktop:package:installer": "npm run build && electron-builder --win nsis --x64",
-    "desktop:package:portable": "npm run build && electron-builder --win portable --x64"
+    "desktop:clean": "node scripts/clean-standalone.cjs",
+    "desktop:package": "npm run build && npm run desktop:clean && electron-builder --win nsis portable --x64",
+    "desktop:package:installer": "npm run build && npm run desktop:clean && electron-builder --win nsis --x64",
+    "desktop:package:portable": "npm run build && npm run desktop:clean && electron-builder --win portable --x64"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",
