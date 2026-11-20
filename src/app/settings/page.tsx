@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Archive, Bell, Cpu, Database, Download, FileUp, Info, Monitor, Palette, Settings2, ShieldCheck, Upload } from "lucide-react";
 import { useLive, useSettings, useToast } from "@/components/Providers";
 import { Card, Empty, ErrorBox, Modal, PageHeader, Seg, SettingRow, Skeleton, Switch, useFetch } from "@/components/ui";
 import { AboutPanel, ChangelogModal } from "@/components/Changelog";
-import { FONTS, LOGOS, NAV, THEMES, TITLEBARS, type ChronosSettings, type PerfMode } from "@/lib/settings-shared";
+import { FONTS, GRADIENT_PRESETS, LOGOS, NAV, THEMES, TITLEBARS, customThemeVars, type ChronosSettings, type PerfMode } from "@/lib/settings-shared";
 import { Logo3D } from "@/components/Logo3D";
 import { getDesktop } from "@/lib/desktop";
 import { fireEvent } from "@/lib/events";
 import { fmtBytes, fmtDateTime, formatShort } from "@/lib/time";
+import { Select } from "@/components/Select";
 
 type Tab = "general" | "monitoring" | "appearance" | "performance" | "data" | "backups" | "notifications" | "importexport" | "about";
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
@@ -80,9 +81,9 @@ function General() {
           <input className="input" style={{ width: 200 }} value={name} maxLength={40} placeholder="Your name" onChange={(e) => setName(e.target.value)} onBlur={() => { if (name.trim() !== settings.userName) { void update({ userName: name.trim() }); if (name.trim()) fireEvent("set_name"); } }} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} />
         </SettingRow>
         <SettingRow title="Default landing page" desc="Page opened when you start WatchTower in a new session.">
-          <select className="select" value={settings.landing} onChange={(e) => update({ landing: e.target.value })}>
+          <Select className="select" value={settings.landing} onChange={(e) => update({ landing: e.target.value })}>
             {NAV.map((n) => <option key={n.href} value={n.href}>{n.label}</option>)}
-          </select>
+          </Select>
         </SettingRow>
         <SettingRow title="Time zone" desc="Used to place sessions on calendar days and hours. Detected automatically.">
           <span className="badge">{settings.timezone || "detecting…"}</span>
@@ -158,16 +159,73 @@ const ACCENTS: ChronosSettings["accent"][] = ["teal", "sage", "blue", "violet", 
 const ACCENT_HEX: Record<string, string> = { teal: "#4fb3a5", sage: "#93b58c", blue: "#6c9fe0", violet: "#a094dc", amber: "#d9b56a" };
 const APPEARANCE_DEFAULTS: Partial<ChronosSettings> = { theme: "dark", accent: "teal", font: "inter", fontSize: 14, density: "comfortable", radius: 14, animations: true, transparency: true, animSpeed: "normal", numberRoll: true, shadow: "soft", titleBar: "windows" };
 
+/** Lets the user build their own gradient theme. Colour pickers fire continuously, so changes are saved after a short pause. */
+function GradientEditor() {
+  const { settings, update } = useSettings();
+  const [draft, setDraft] = useState({ customColor1: settings.customColor1, customColor2: settings.customColor2, customColor3: settings.customColor3, customThree: settings.customThree, customAngle: settings.customAngle, customAccent: settings.customAccent });
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  const commit = (patch: Partial<typeof draft>, now = false) => {
+    const next = { ...draft, ...patch };
+    setDraft(next);
+    if (timer.current) clearTimeout(timer.current);
+    const save = () => { void update({ ...next, theme: "custom" }); fireEvent("change_theme"); };
+    if (now) save(); else timer.current = setTimeout(save, 220);
+  };
+  const vars = customThemeVars(draft);
+  const Color = ({ label, k }: { label: string; k: "customColor1" | "customColor2" | "customColor3" | "customAccent" }) => (
+    <div className="grad-row">
+      <label htmlFor={`grad-${k}`}>{label}</label>
+      <span className="grad-color">
+        <input id={`grad-${k}`} type="color" value={draft[k]} onChange={(e) => commit({ [k]: e.target.value })} />
+        <code>{draft[k].toUpperCase()}</code>
+      </span>
+    </div>
+  );
+  return (
+    <div className="grad-editor">
+      <div className="grad-preview" style={{ background: vars["--custom-gradient"] }} aria-hidden>
+        <span style={{ background: vars["--accent"], color: vars["--accent-ink"] }}>Accent</span>
+      </div>
+      <div>
+        <div className="t" style={{ marginBottom: 8 }}>Presets</div>
+        <div className="grad-presets">
+          {GRADIENT_PRESETS.map((p) => (
+            <button key={p.label} type="button" className="grad-chip" onClick={() => commit({ customColor1: p.c1, customColor2: p.c2, customColor3: p.c3, customThree: p.three, customAngle: p.angle, customAccent: p.accent }, true)}>
+              <i style={{ background: `linear-gradient(${p.angle}deg, ${p.c1}, ${p.three ? p.c3 : p.c2})` }} />{p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <Color label="First colour" k="customColor1" />
+      <Color label="Second colour" k="customColor2" />
+      <div className="grad-row">
+        <label>Use third colour</label>
+        <Switch on={draft.customThree} onChange={(v) => commit({ customThree: v }, true)} label="Use a third colour" />
+      </div>
+      {draft.customThree && <Color label="Third colour" k="customColor3" />}
+      <div className="grad-row">
+        <label htmlFor="grad-angle">Direction</label>
+        <input id="grad-angle" type="range" min={0} max={359} value={draft.customAngle} onChange={(e) => commit({ customAngle: Number(e.target.value) })} aria-label="Gradient direction" />
+        <code className="faint">{draft.customAngle}°</code>
+      </div>
+      <Color label="Accent colour" k="customAccent" />
+      <div className="faint" style={{ fontSize: "0.8rem" }}>Text and surfaces adjust to your colours automatically, so light or dark gradients stay readable.</div>
+    </div>
+  );
+}
+
 function Appearance() {
   const { settings, update } = useSettings();
   const classic = settings.theme === "dark" || settings.theme === "light" || settings.theme === "system";
+  const isCustom = settings.theme === "custom";
   const { motion: mo } = useSettings();
   const motionOn = mo.page;
   return (
     <Card title="Appearance">
       <div className="set-block">
         <div className="t">Theme</div>
-        <div className="d">Twelve hand-tuned palettes. Changes apply instantly and are saved with your settings.</div>
+        <div className="d">{THEMES.length} palettes plus your own gradient. Changes apply instantly and are saved with your settings.</div>
         <div className="theme-grid">
           {THEMES.map((t) => (
             <button key={t.id} className={`theme-tile ${settings.theme === t.id ? "on" : ""}`} onClick={() => { void update({ theme: t.id }); fireEvent("change_theme"); }} aria-pressed={settings.theme === t.id} title={t.label}>
@@ -178,7 +236,12 @@ function Appearance() {
               <div className="theme-name">{t.label}</div>
             </button>
           ))}
+          <button className={`theme-tile custom ${settings.theme === "custom" ? "on" : ""}`} style={{ "--custom-preview": `linear-gradient(${settings.customAngle}deg, ${settings.customColor1}, ${settings.customThree ? settings.customColor3 : settings.customColor2})`, "--custom-accent": settings.customAccent } as CSSProperties} onClick={() => { void update({ theme: "custom" }); fireEvent("change_theme"); }} aria-pressed={settings.theme === "custom"} title="Custom gradient">
+            <div className="theme-prev"><i style={{ flex: 2 }} /><i style={{ flex: 1 }} /></div>
+            <div className="theme-name">Custom Gradient</div>
+          </button>
         </div>
+        {settings.theme === "custom" && <GradientEditor />}
       </div>
       <div className="set-block">
         <div className="t">App logo</div>
@@ -213,15 +276,15 @@ function Appearance() {
           ))}
         </div>
       </div>
-      {classic ? (
+      {isCustom ? null : classic ? (
         <SettingRow title="Accent color"><div className="flex gap-2">{ACCENTS.map((a) => <button key={a} className={`swatch ${settings.accent === a ? "on" : ""}`} style={{ background: ACCENT_HEX[a] }} aria-label={a} title={a} onClick={() => update({ accent: a })} />)}</div></SettingRow>
       ) : (
-        <SettingRow title="Accent color" desc="Each themed palette ships with its own matching accent. Choose Classic Dark or Light to pick a custom one."><span className="badge">Part of theme</span></SettingRow>
+        <SettingRow title="Accent color" desc="Each themed palette ships with its own matching accent. Choose Classic Dark or Light, or build your own Custom Gradient, to pick an accent."><span className="badge">Part of theme</span></SettingRow>
       )}
       <SettingRow title="Font family" desc="Fonts are bundled with WatchTower and work offline.">
-        <select className="select" value={settings.font} onChange={(e) => update({ font: e.target.value as ChronosSettings["font"] })} style={{ fontFamily: FONTS.find((f) => f.id === settings.font)?.sample }}>
+        <Select className="select" value={settings.font} onChange={(e) => update({ font: e.target.value as ChronosSettings["font"] })} style={{ fontFamily: FONTS.find((f) => f.id === settings.font)?.sample }}>
           {FONTS.map((f) => <option key={f.id} value={f.id} style={{ fontFamily: f.sample }}>{f.label}</option>)}
-        </select>
+        </Select>
       </SettingRow>
       <SettingRow title="Font size" desc={`${settings.fontSize}px`}><input type="range" min={12} max={18} value={settings.fontSize} onChange={(e) => update({ fontSize: Number(e.target.value) })} aria-label="Font size" /></SettingRow>
       <SettingRow title="UI density"><Seg value={settings.density} onChange={(v) => update({ density: v })} options={[{ id: "comfortable", label: "Comfortable" }, { id: "compact", label: "Compact" }]} /></SettingRow>
@@ -362,9 +425,9 @@ function Backups() {
       <Card title="Automatic backups">
         <Tog k="backupEnabled" title="Automatic backups" desc="Verified JSON backups written atomically (temporary file → rename). Existing backups are never overwritten." />
         <SettingRow title="Frequency">
-          <select className="select" value={settings.backupFrequency} onChange={(e) => update({ backupFrequency: e.target.value as ChronosSettings["backupFrequency"] })}>
+          <Select className="select" value={settings.backupFrequency} onChange={(e) => update({ backupFrequency: e.target.value as ChronosSettings["backupFrequency"] })}>
             <option value="6h">Every 6 hours</option><option value="12h">Every 12 hours</option><option value="daily">Daily</option><option value="weekly">Weekly</option>
-          </select>
+          </Select>
         </SettingRow>
         <SettingRow title="Backup directory" desc={`Current: ${data?.directory ?? "…"}. Leave empty for the default. The directory must be writable by the WatchTower server.`}>
           <div className="flex gap-2"><input className="input" style={{ width: 260 }} placeholder="Default" value={dir} onChange={(e) => setDir(e.target.value)} /><button className="btn" disabled={dir === settings.backupDir} onClick={() => update({ backupDir: dir.trim() }).then(reload)}>Save</button></div>

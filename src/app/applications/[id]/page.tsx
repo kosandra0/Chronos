@@ -13,6 +13,7 @@ import { CATEGORIES } from "@/lib/identify";
 import { rangeQuery, ymd } from "@/lib/ranges";
 import { formatDetailed, formatShort, fmtDateTime, fmtTime } from "@/lib/time";
 import type { SessionRow } from "@/lib/stats";
+import { Select } from "@/components/Select";
 
 type Detail = {
   app: { id: string; name: string; exe: string; path: string | null; category: string; categoryOverridden: boolean; detectionStatus: string; elevated: boolean; firstSeen: string; lastSeen: string };
@@ -64,9 +65,9 @@ export default function ApplicationDetailPage() {
         actions={
           <>
             <CategoryBadge category={app.category} />
-            <select className="select" value={app.category} onChange={(e) => setCategory(e.target.value)} aria-label="Change category">
+            <Select className="select" value={app.category} onChange={(e) => setCategory(e.target.value)} aria-label="Change category">
               {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-            </select>
+            </Select>
           </>
         }
       />

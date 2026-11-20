@@ -10,9 +10,28 @@ export type ChangelogEntry = {
   knownIssues: string[];
 };
 
-export const APP_VERSION = "1.0.0";
+export const APP_VERSION = "1.1.0";
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "1.1.0",
+    date: "2026-11-20",
+    label: "Twenty new themes, your own gradient and more fonts",
+    features: [
+      "Twenty new dark themes: Obsidian Calm, Deep Teal, Northern Aurora, Arctic Twilight, Indigo Dusk, Plum Velvet, Amethyst Night, Wine Cellar, Ember Charcoal, Copper Night, Olive Grove, Moss Stone, Cedar Wood, Graphite Blue, Ink Navy, Charcoal Mint, Storm Cloud, Midnight Rose, Dusk Gold and Space Violet",
+      "Custom Gradient theme: pick two or three colours, the direction and your own accent, or start from one of eight presets; text and surfaces adapt automatically so light or dark gradients stay readable",
+      "Sixteen more fonts: Times New Roman, Georgia, Cambria, Palatino Linotype, Garamond, Book Antiqua, Calibri, Arial, Verdana, Tahoma, Trebuchet MS, Cascadia Code, plus bundled Merriweather, Source Serif, Playfair Display and IBM Plex Sans that also work offline",
+    ],
+    improvements: [
+      "Dropdown menus are now rounded, themed and animated instead of the square system list, with keyboard control (arrows, Enter, Escape, type to jump) and a check mark on the current choice",
+      "Dropdowns open upward automatically near the bottom of the window and are never clipped by cards",
+      "The font list previews every font in its own typeface",
+    ],
+    fixes: [
+      "Settings showed \"This page couldn't load\" after installing over an older copy: a stale page cache from the previous version is now cleared every time WatchTower starts",
+    ],
+    knownIssues: ["Windows builds are not code-signed; SmartScreen may warn on first launch.", "System fonts such as Times New Roman or Calibri fall back to a similar font on computers that do not have them."],
+  },
   {
     version: "1.0.0",
     date: "2026-11-20",

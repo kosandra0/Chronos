@@ -1,0 +1,71 @@
+/* =====================================================================
+   v1.1.0 - extra fonts, custom gradient theme, rounded dropdown menus
+   ===================================================================== */
+
+/* More fonts. System fonts fall back to a close match on machines that do not have them. */
+html[data-font="times"] { --font: "Times New Roman", Times, serif; }
+html[data-font="georgia"] { --font: Georgia, "Times New Roman", serif; }
+html[data-font="cambria"] { --font: Cambria, Georgia, serif; }
+html[data-font="palatino"] { --font: "Palatino Linotype", Palatino, "Book Antiqua", serif; }
+html[data-font="garamond"] { --font: Garamond, "Times New Roman", serif; }
+html[data-font="book"] { --font: "Book Antiqua", Palatino, serif; }
+html[data-font="merriweather"] { --font: "Merriweather", Georgia, serif; }
+html[data-font="sourceserif"] { --font: "Source Serif 4", Georgia, serif; }
+html[data-font="playfair"] { --font: "Playfair Display", Georgia, serif; }
+html[data-font="calibri"] { --font: Calibri, "Segoe UI", sans-serif; }
+html[data-font="arial"] { --font: Arial, Helvetica, sans-serif; }
+html[data-font="verdana"] { --font: Verdana, Geneva, sans-serif; }
+html[data-font="tahoma"] { --font: Tahoma, "Segoe UI", sans-serif; }
+html[data-font="trebuchet"] { --font: "Trebuchet MS", "Segoe UI", sans-serif; }
+html[data-font="plex"] { --font: "IBM Plex Sans", "Segoe UI", sans-serif; }
+html[data-font="cascadia"] { --font: "Cascadia Code", Consolas, ui-monospace, monospace; }
+
+/* Custom gradient theme: the colours come from inline CSS variables set by the app */
+html[data-theme="custom"] .shell { background: var(--custom-gradient); }
+html[data-theme="custom"] .main { background: color-mix(in srgb, var(--bg) 58%, transparent); backdrop-filter: blur(14px); }
+html[data-theme="custom"] .sidebar { background: color-mix(in srgb, var(--bg2) 55%, transparent); backdrop-filter: blur(18px); }
+
+.theme-count { font-weight: 600; color: var(--text2); }
+.theme-tile.custom .theme-prev { background: var(--custom-preview, linear-gradient(135deg, #12202f, #2c4a5e)); }
+.theme-tile.custom .theme-prev i { background: rgba(255, 255, 255, 0.14); }
+.theme-tile.custom .theme-prev i:last-child { background: var(--custom-accent, #7fd1ae); }
+
+.grad-editor { margin-top: 14px; padding: 14px; border: 1px solid var(--border-strong); border-radius: calc(var(--radius) - 2px); background: var(--bg); display: flex; flex-direction: column; gap: 14px; }
+.grad-preview { height: 72px; border-radius: calc(var(--radius) - 4px); border: 1px solid var(--border); position: relative; overflow: hidden; }
+.grad-preview span { position: absolute; right: 10px; bottom: 8px; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+.grad-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.grad-row > label { min-width: 118px; color: var(--text2); font-size: 0.92rem; }
+.grad-color { display: inline-flex; align-items: center; gap: 8px; }
+.grad-color input[type="color"] { width: 40px; height: 32px; padding: 2px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--card); cursor: pointer; }
+.grad-color input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.grad-color input[type="color"]::-webkit-color-swatch { border: none; border-radius: 7px; }
+.grad-color code { font-size: 0.82rem; color: var(--text3); }
+.grad-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.grad-chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: 0.86rem; cursor: pointer; transition: border-color 0.2s, transform 0.2s var(--ease); }
+.grad-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+.grad-chip i { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); }
+
+/* Rounded dropdown (replaces the square native list) */
+.wt-select { position: relative; display: inline-block; min-width: 0; }
+.wt-select-btn { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; cursor: pointer; }
+.wt-select-btn .wt-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.wt-select-btn .wt-chev { flex: none; opacity: 0.7; transition: transform 0.22s var(--ease); }
+.wt-select-btn[aria-expanded="true"] .wt-chev { transform: rotate(180deg); }
+.wt-select-btn[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.wt-select-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.wt-pop {
+  min-width: 190px; position: fixed; z-index: 4000; box-sizing: border-box; padding: 6px; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--card); color: var(--text); border: 1px solid var(--border-strong);
+  border-radius: calc(var(--radius) + 2px); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55), 0 2px 0 rgba(255, 255, 255, 0.03) inset;
+  animation: wt-pop-in 0.16s var(--ease, ease-out);
+}
+html[data-motion="off"] .wt-pop { animation: none; }
+@keyframes wt-pop-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+.wt-pop.up { transform-origin: bottom; }
+.wt-opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: calc(var(--radius) - 4px); cursor: pointer; font-size: 0.95rem; line-height: 1.25; user-select: none; }
+.wt-opt .wt-tick { flex: none; color: var(--accent); }
+.wt-opt.active { background: var(--hover); }
+.wt-opt.selected { background: color-mix(in srgb, var(--accent) 16%, transparent); font-weight: 600; }
+.wt-pop::-webkit-scrollbar { width: 10px; }
+.wt-pop::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+.wt-pop::-webkit-scrollbar-track { background: transparent; }

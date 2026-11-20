@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Award, Archive, Bell, FileCheck2, Pause, Play } from "lucide-react";
 import { AnimatePresence, motion as fm } from "framer-motion";
 import { getDesktop } from "@/lib/desktop";
-import { DEFAULT_SETTINGS, type ChronosSettings } from "@/lib/settings-shared";
+import { DEFAULT_SETTINGS, customThemeVars, type ChronosSettings } from "@/lib/settings-shared";
 import { ymd, addDays, resolvePreset } from "@/lib/ranges";
 import { formatShort } from "@/lib/time";
 import type { StatsResult, SessionRow } from "@/lib/stats";
@@ -74,12 +74,25 @@ export const useToast = () => useContext(ToastContext);
 
 // ---------------- Provider ----------------
 
+const CUSTOM_VARS = ["--bg", "--bg2", "--card", "--elev", "--text", "--text2", "--text3", "--accent", "--accent-ink", "--border", "--border-strong", "--shadow", "--glass", "--hover", "--heat0", "--custom-gradient"];
+
 function applyAppearance(s: ChronosSettings) {
   const d = document.documentElement;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const theme = s.theme === "system" ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : s.theme;
   const perf = s.performanceMode === "performance";
   d.dataset.theme = theme;
+  // The custom gradient theme is driven by inline CSS variables; they are removed again for every other theme.
+  for (const name of CUSTOM_VARS) d.style.removeProperty(name);
+  d.style.colorScheme = "";
+  if (theme === "custom") {
+    const vars = customThemeVars(s);
+    for (const [name, value] of Object.entries(vars)) {
+      if (name === "--scheme") d.style.colorScheme = value;
+      else d.style.setProperty(name, value);
+    }
+    try { localStorage.setItem("chronos.customvars", JSON.stringify(vars)); } catch { /* storage unavailable: the boot script just falls back to the defaults */ }
+  }
   d.dataset.accent = s.accent;
   d.dataset.density = s.density;
   d.dataset.font = s.font;

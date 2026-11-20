@@ -8,6 +8,7 @@ import { addDays, parseYmd, startOfWeek, ymd } from "@/lib/ranges";
 import { formatDetailed, formatHMS, formatShort } from "@/lib/time";
 import { Odometer } from "@/components/AnimText";
 import type { StatsResult } from "@/lib/stats";
+import { Select } from "@/components/Select";
 
 type Cell = { day: string; hour: number; active: number; idle: number; desktop: number };
 type Resp = { idleInTotal: boolean; cells: Cell[] };
@@ -190,9 +191,9 @@ export function HeatmapView() {
             ) : view === "month" ? (
               <span className="flex gap-1"><button className="btn btn-sm" aria-label="Previous month" onClick={() => setMonth(({ y, m }) => (m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 }))}><ChevronLeft size={14} /></button><button className="btn btn-sm" aria-label="Next month" disabled={month.y === now.getFullYear() && month.m >= now.getMonth()} onClick={() => setMonth(({ y, m }) => (m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 }))}><ChevronRight size={14} /></button></span>
             ) : view === "hour" ? (
-              <select className="select" style={{ height: 30 }} value={hourDays} onChange={(e) => setHourDays(Number(e.target.value))} aria-label="Range">
+              <Select className="select" style={{ height: 30 }} value={hourDays} onChange={(e) => setHourDays(Number(e.target.value))} aria-label="Range">
                 <option value={30}>30 days</option><option value={90}>90 days</option><option value={365}>365 days</option>
-              </select>
+              </Select>
             ) : null
           }
         >

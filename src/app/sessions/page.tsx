@@ -9,6 +9,7 @@ import { CATEGORIES } from "@/lib/identify";
 import { formatHMS, fmtDate, fmtTime } from "@/lib/time";
 import { Odometer } from "@/components/AnimText";
 import type { SessionRow } from "@/lib/stats";
+import { Select } from "@/components/Select";
 
 type Resp = { sessions: SessionRow[]; total: number; page: number; pageSize: number };
 const PAGE_SIZE = 25;
@@ -50,17 +51,17 @@ export default function SessionsPage() {
         </div>
         <label className="flex items-center gap-2 muted" style={{ fontSize: "0.85rem" }}>From <input className="input" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} /></label>
         <label className="flex items-center gap-2 muted" style={{ fontSize: "0.85rem" }}>To <input className="input" type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} /></label>
-        <select className="select" value={appId} onChange={(e) => setAppId(e.target.value)} aria-label="Application filter">
+        <Select className="select" value={appId} onChange={(e) => setAppId(e.target.value)} aria-label="Application filter">
           <option value="">All applications</option>
           {apps.data?.apps.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-        </select>
-        <select className="select" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category filter">
+        </Select>
+        <Select className="select" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category filter">
           <option value="all">All categories</option>
           {[...CATEGORIES, "Desktop", "Idle"].map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <select className="select" value={type} onChange={(e) => setType(e.target.value)} aria-label="Activity type filter">
+        </Select>
+        <Select className="select" value={type} onChange={(e) => setType(e.target.value)} aria-label="Activity type filter">
           <option value="all">All activity</option><option value="app">Application</option><option value="desktop">Desktop</option><option value="idle">Idle</option><option value="locked">Locked</option>
-        </select>
+        </Select>
         {filtered && <button className="btn btn-sm" onClick={() => { setQ(""); setFrom(""); setTo(""); setAppId(""); setCategory("all"); setType("all"); }}>Clear filters</button>}
       </div>
       {error && <ErrorBox message={error} onRetry={reload} />}

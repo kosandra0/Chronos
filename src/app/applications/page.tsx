@@ -8,6 +8,7 @@ import { CATEGORIES } from "@/lib/identify";
 import { usePersisted } from "@/lib/persist";
 import { formatDetailed, formatHMS, formatPct, fmtDateTime } from "@/lib/time";
 import { Odometer } from "@/components/AnimText";
+import { Select } from "@/components/Select";
 
 type AppRow = {
   id: string; name: string; exe: string; path: string | null; category: string; detectionStatus: string; elevated: boolean;
@@ -31,18 +32,18 @@ export default function ApplicationsPage() {
           <Search size={15} style={{ position: "absolute", left: 12, top: 10.5, color: "var(--text3)" }} />
           <input className="input" style={{ width: "100%", paddingLeft: 36 }} placeholder="Search by name, executable or path" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search applications" />
         </div>
-        <select className="select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
+        <Select className="select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
           <option value="most">Most used</option>
           <option value="least">Least used</option>
           <option value="alpha">Alphabetical</option>
           <option value="recent">Recently used</option>
           <option value="longest">Longest session</option>
           <option value="count">Highest session count</option>
-        </select>
-        <select className="select" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
+        </Select>
+        <Select className="select" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
           <option value="all">All categories</option>
           {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        </Select>
         {data && <span className="muted">{data.apps.length} application{data.apps.length === 1 ? "" : "s"}</span>}
       </div>
       {error && <ErrorBox message={error} onRetry={reload} />}

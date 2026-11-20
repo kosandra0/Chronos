@@ -38,6 +38,8 @@ export async function updateSettings(partial: Record<string, unknown>): Promise<
     if (k === "idleThresholdMin") val = Math.min(240, Math.max(1, Math.round(Number(v))));
     if (k === "fontSize") val = Math.min(18, Math.max(12, Math.round(Number(v))));
     if (k === "logo" && !LOGOS.some((l) => l.id === v)) continue;
+    if ((k === "customColor1" || k === "customColor2" || k === "customColor3" || k === "customAccent") && !/^#[0-9a-fA-F]{6}$/.test(String(v))) continue;
+    if (k === "customAngle") val = ((Math.round(Number(v)) % 360) + 360) % 360;
     if (k === "userName") val = String(v).replace(/\s+/g, " ").trim().slice(0, 40);
     if (k === "radius") val = Math.min(24, Math.max(0, Math.round(Number(v))));
     if (k === "dailyGoalHours") val = Math.min(24, Math.max(0, Math.round(Number(v) * 2) / 2));

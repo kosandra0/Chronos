@@ -1,0 +1,202 @@
+[
+  {
+    "id": "obsidian",
+    "label": "Obsidian Calm",
+    "mode": "dark",
+    "swatch": [
+      "#101114",
+      "#1c1f24",
+      "#90bed5"
+    ]
+  },
+  {
+    "id": "deepteal",
+    "label": "Deep Teal",
+    "mode": "dark",
+    "swatch": [
+      "#0c1617",
+      "#162829",
+      "#84cdc3"
+    ]
+  },
+  {
+    "id": "aurora",
+    "label": "Northern Aurora",
+    "mode": "dark",
+    "swatch": [
+      "#0e1614",
+      "#192723",
+      "#89d2ad"
+    ]
+  },
+  {
+    "id": "arctic",
+    "label": "Arctic Twilight",
+    "mode": "dark",
+    "swatch": [
+      "#0d1316",
+      "#182128",
+      "#90cbdf"
+    ]
+  },
+  {
+    "id": "indigo",
+    "label": "Indigo Dusk",
+    "mode": "dark",
+    "swatch": [
+      "#0d0d16",
+      "#181828",
+      "#9dace7"
+    ]
+  },
+  {
+    "id": "plum",
+    "label": "Plum Velvet",
+    "mode": "dark",
+    "swatch": [
+      "#150e16",
+      "#261927",
+      "#d6a4cd"
+    ]
+  },
+  {
+    "id": "amethyst",
+    "label": "Amethyst Night",
+    "mode": "dark",
+    "swatch": [
+      "#120e16",
+      "#201828",
+      "#baa3e0"
+    ]
+  },
+  {
+    "id": "wine",
+    "label": "Wine Cellar",
+    "mode": "dark",
+    "swatch": [
+      "#160e10",
+      "#28181c",
+      "#db94a0"
+    ]
+  },
+  {
+    "id": "ember",
+    "label": "Ember Charcoal",
+    "mode": "dark",
+    "swatch": [
+      "#141110",
+      "#231f1d",
+      "#e0967b"
+    ]
+  },
+  {
+    "id": "copper",
+    "label": "Copper Night",
+    "mode": "dark",
+    "swatch": [
+      "#15110e",
+      "#261f1a",
+      "#d5a27b"
+    ]
+  },
+  {
+    "id": "olive",
+    "label": "Olive Grove",
+    "mode": "dark",
+    "swatch": [
+      "#12150f",
+      "#21251b",
+      "#b3c889"
+    ]
+  },
+  {
+    "id": "moss",
+    "label": "Moss Stone",
+    "mode": "dark",
+    "swatch": [
+      "#10140f",
+      "#1d241b",
+      "#8ec28e"
+    ]
+  },
+  {
+    "id": "cedar",
+    "label": "Cedar Wood",
+    "mode": "dark",
+    "swatch": [
+      "#15120e",
+      "#26201a",
+      "#caab7d"
+    ]
+  },
+  {
+    "id": "graphite",
+    "label": "Graphite Blue",
+    "mode": "dark",
+    "swatch": [
+      "#111213",
+      "#1e1f22",
+      "#9cb4d3"
+    ]
+  },
+  {
+    "id": "ink",
+    "label": "Ink Navy",
+    "mode": "dark",
+    "swatch": [
+      "#0b0e19",
+      "#131a2d",
+      "#8bb3da"
+    ]
+  },
+  {
+    "id": "charmint",
+    "label": "Charcoal Mint",
+    "mode": "dark",
+    "swatch": [
+      "#101312",
+      "#1d2221",
+      "#94d1bb"
+    ]
+  },
+  {
+    "id": "storm",
+    "label": "Storm Cloud",
+    "mode": "dark",
+    "swatch": [
+      "#101314",
+      "#1c2124",
+      "#a2bbcd"
+    ]
+  },
+  {
+    "id": "mrose",
+    "label": "Midnight Rose",
+    "mode": "dark",
+    "swatch": [
+      "#150e12",
+      "#261a20",
+      "#db9fb8"
+    ]
+  },
+  {
+    "id": "dgold",
+    "label": "Dusk Gold",
+    "mode": "dark",
+    "swatch": [
+      "#15130f",
+      "#25221b",
+      "#d8bf79"
+    ]
+  },
+  {
+    "id": "space",
+    "label": "Space Violet",
+    "mode": "dark",
+    "swatch": [
+      "#0e0c18",
+      "#19152b",
+      "#c0a0e3"
+    ]
+  }
+]
