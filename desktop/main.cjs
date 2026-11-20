@@ -318,6 +318,11 @@ function startLocalServer(port, serverDir, serverFile, agentFile) {
   const state = { child: null, pid: null, exited: false, exitCode: null, recent: [] };
   server = state;
 
+  // The server writes a page cache at runtime. An installer that upgrades in place leaves the previous version's cache
+  // behind, and it points at script files that no longer exist (pages then show "This page couldn't load"). It is
+  // rebuilt on demand, so it is always cleared before the server starts.
+  try { fs.rmSync(path.join(serverDir, '.next', 'server', 'route-cache'), { recursive: true, force: true }); } catch (error) { log('WARN', `could not clear the page cache (${error.message})`); }
+
   log('INFO', `starting server: file=${serverFile} cwd=${serverDir} port=${port} host=127.0.0.1`);
   const child = utilityProcess.fork(serverFile, [], {
     cwd: serverDir,
