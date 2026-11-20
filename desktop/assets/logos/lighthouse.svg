@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs>
+  <linearGradient id="wt-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1c2733"/><stop offset="1" stop-color="#0f161e"/></linearGradient>
+  <linearGradient id="wt-beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd54a" stop-opacity="0.95"/><stop offset="1" stop-color="#ffd54a" stop-opacity="0"/></linearGradient>
+  <linearGradient id="wt-tw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8fa3ba"/><stop offset="1" stop-color="#5d6f85"/></linearGradient>
+</defs><rect width="64" height="64" rx="15" fill="url(#wt-bg)"/><polygon points="36,20 62,8 62,34 36,25" fill="url(#wt-beam)"/><polygon points="26,57 38,57 36,27 28,27" fill="#eef2f6"/><polygon points="26.8,50 37.2,50 37.6,54 26.4,54" fill="#e5584f"/><polygon points="28.2,36 35.8,36 36.3,42 27.7,42" fill="#e5584f"/><rect x="26.5" y="23" width="11" height="4" rx="1" fill="#46566a"/><rect x="28.5" y="16.5" width="7" height="6.5" rx="1" fill="#ffd54a"/><path d="M27.5 16.5 Q32 8.5 36.5 16.5Z" fill="#e5584f"/><path d="M16 60 Q32 51 48 60Z" fill="#46566a"/></svg>

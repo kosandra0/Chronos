@@ -1,0 +1,91 @@
+name: Release WatchTower for Windows
+
+# Pushing a tag such as v0.1.1 builds the Windows executables and attaches them to a GitHub Release.
+# Uses only the automatically provided GITHUB_TOKEN. electron-builder itself never publishes (--publish never).
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Verify tag matches package version
+        id: version
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tag = "${{ github.ref_name }}"
+          if ($tag -ne "v$v") { throw "Tag $tag does not match package.json version v$v" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: TypeScript validation
+        run: npm run typecheck
+
+      - name: Build application (Next.js standalone)
+        run: npm run build
+
+      - name: Normalize standalone output (materialize links)
+        run: npm run desktop:clean
+
+      - name: Package Windows executables (installer + portable)
+        run: npx electron-builder --win nsis portable --x64 --publish never
+
+      - name: Package resource and server runtime tests
+        env:
+          WATCHTOWER_REQUIRE_PACKAGE: '1'
+        run: npm test
+
+      - name: Launch packaged app end-to-end (isolated data directory)
+        run: node scripts/verify-packaged.cjs release/win-unpacked/WatchTower.exe
+
+      - name: Verify executables and write checksums
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          $lines = @()
+          foreach ($f in @("release/WatchTower-Setup-$v.exe", "release/WatchTower-Portable-$v-x64.exe")) {
+            if (-not (Test-Path $f)) { throw "Missing expected executable: $f" }
+            $size = (Get-Item $f).Length
+            if ($size -lt 50MB) { throw "$f is suspiciously small ($size bytes)" }
+            $lines += ("{0}  {1}" -f (Get-FileHash $f -Algorithm SHA256).Hash.ToLower(), (Split-Path $f -Leaf))
+          }
+          $lines | Set-Content -Path release/SHA256SUMS.txt -Encoding ascii
+          Get-Content release/SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          $notes = "release-notes/v$v.md"
+          if (-not (Test-Path $notes)) { throw "Missing release notes file: $notes" }
+          $assets = @("release/WatchTower-Setup-$v.exe", "release/WatchTower-Portable-$v-x64.exe", "release/SHA256SUMS.txt")
+          if (Test-Path "models/watchtower-observer.glb") { Copy-Item "models/watchtower-observer.glb" "release/watchtower-sky-observer.glb"; $assets += "release/watchtower-sky-observer.glb" }
+          gh release view "v$v" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            # the release was already published (for example from the developer's PC): refresh its files and notes
+            gh release upload "v$v" $assets --clobber
+            gh release edit "v$v" --title "WatchTower v$v" --notes-file $notes
+          } else {
+            gh release create "v$v" $assets --title "WatchTower v$v" --notes-file $notes --verify-tag
+          }

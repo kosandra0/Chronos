@@ -1,0 +1,144 @@
+{
+  "name": "watchtower",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WatchTower - Windows screen time and application usage intelligence",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "desktop:clean": "node scripts/clean-standalone.cjs",
+    "desktop:package": "npm run build && npm run desktop:clean && electron-builder --win nsis portable --x64 --publish never",
+    "desktop:package:installer": "npm run build && npm run desktop:clean && electron-builder --win nsis --x64 --publish never",
+    "desktop:package:portable": "npm run build && npm run desktop:clean && electron-builder --win portable --x64 --publish never",
+    "test": "node --test tests/*.test.cjs",
+    "test:packaged": "node scripts/verify-packaged.cjs",
+    "desktop:dir": "npm run build && npm run desktop:clean && electron-builder --win dir --x64 --publish never",
+    "icons": "node scripts/make-icons.cjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "@fontsource/dm-sans": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/lora": "^5.3.0",
+    "@fontsource/manrope": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
+    "drizzle-orm": "0.45.2",
+    "framer-motion": "^14.14.0",
+    "lucide-react": "^1.76.0",
+    "next": "16.4.2",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "recharts": "^3.11.0",
+    "simple-icons": "^16.38.0",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.17",
+    "@types/node": "22.19.15",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@types/three": "^0.187.0",
+    "electron": "45.4.1",
+    "electron-builder": "26.18.1",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.4.2",
+    "postcss": "8.5.23",
+    "tailwindcss": "4.1.17",
+    "typescript": "5.9.3"
+  },
+  "build": {
+    "appId": "com.watchtower.app",
+    "productName": "WatchTower",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**/*",
+      "package.json",
+      "!**/node_modules/**"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/standalone",
+        "to": "watchtower-server",
+        "filter": [
+          "**/*",
+          "!src/**",
+          "!desktop/**",
+          "!scripts/**",
+          "!tests/**",
+          "!package-lock.json",
+          "!*.md",
+          "!tsconfig.tsbuildinfo",
+          "!eslint.config.mjs",
+          "!postcss.config.mjs",
+          "!release/**",
+          "!installer/**",
+          "!logs/**",
+          "!build/**",
+          "!.playwright-mcp/**",
+          "!release-notes/**"
+        ]
+      },
+      {
+        "from": ".next/standalone/node_modules",
+        "to": "watchtower-server/node_modules"
+      },
+      {
+        "from": ".next/static",
+        "to": "watchtower-server/.next/static"
+      },
+      {
+        "from": "agent/watchtower-agent.ps1",
+        "to": "agent/watchtower-agent.ps1"
+      },
+      {
+        "from": "node_modules/electron-winstaller/vendor/rcedit.exe",
+        "to": "tools/rcedit.exe"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "WatchTower",
+      "runAfterFinish": true,
+      "artifactName": "WatchTower-Setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "WatchTower-Portable-${version}-${arch}.${ext}"
+    },
+    "copyright": "Copyright (c) 2026 WatchTower"
+  },
+  "author": {
+    "name": "WatchTower"
+  }
+}

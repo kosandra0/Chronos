@@ -1,0 +1,21 @@
+node_modules/
+.next/
+chronos-backups/
+*.tsbuildinfo
+next-env.d.ts
+.env
+release/
+chronos-data/
+*.log
+.test-tmp/
+
+# Private local development record - NEVER publish (owner's permanent rule)
+MASTER_DEVELOPMENT.md
+
+# Local installer folder (built executables and the installed app)
+installer/
+
+# Local-only folders and generated files
+logs/
+AGENTS.md
+*.old.exe
