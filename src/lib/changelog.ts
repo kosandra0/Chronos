@@ -10,9 +10,23 @@ export type ChangelogEntry = {
   knownIssues: string[];
 };
 
-export const APP_VERSION = "2.0.0";
+export const APP_VERSION = "2.0.1";
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "2.0.1",
+    date: "2026-11-21",
+    label: "Security update and smoother page loads",
+    features: [],
+    improvements: [
+      "Pages load faster: the window no longer throws away and rebuilds the page on every full load (the title bar and updater panel now wait for the desktop bridge instead of making the first render differ from the server)",
+    ],
+    fixes: [
+      "Updated Next.js from 16.4.2 to 16.4.6, which fixes the published information-disclosure and cache-leak advisories for server caching functions",
+      "Fixed React hydration errors (#418/#519) that appeared in the logs on full page loads",
+    ],
+    knownIssues: ["Windows builds are not code-signed; SmartScreen may warn on first launch."],
+  },
   {
     version: "2.0.0",
     date: "2026-11-21",

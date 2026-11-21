@@ -4,7 +4,7 @@ import { AppWindow, BarChart3, History, LayoutDashboard, List, Pause, Play, Powe
 import { useLive, useLiveTotals, useSettings } from "@/components/Providers";
 import { RollingTime } from "@/components/Rolling";
 import { Logo3D } from "@/components/Logo3D";
-import { getDesktop } from "@/lib/desktop";
+import { useDesktop } from "@/lib/desktop";
 import { APP_NAME } from "@/lib/settings-shared";
 
 const LINKS = [
@@ -22,7 +22,7 @@ export default function TrayPanel() {
   const lt = useLiveTotals();
   const { data } = useLive();
   const { settings, update } = useSettings();
-  const desk = getDesktop();
+  const desk = useDesktop();
   const cur = data?.current;
   const paused = data?.status === "paused";
   return (

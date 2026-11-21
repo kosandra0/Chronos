@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Minus, Square, Copy, X } from "lucide-react";
-import { getDesktop } from "@/lib/desktop";
+import { useDesktop } from "@/lib/desktop";
 import { APP_NAME, NAV } from "@/lib/settings-shared";
 import { useSettings } from "./Providers";
 import { WatchTowerMark } from "./Logo3D";
@@ -11,7 +11,7 @@ import { WatchTowerMark } from "./Logo3D";
 const DIRS = ["n", "s", "e", "w", "ne", "nw", "se", "sw"] as const;
 
 function ResizeHandles() {
-  const desk = getDesktop();
+  const desk = useDesktop();
   if (!desk) return null;
   return (
     <>
@@ -37,7 +37,7 @@ function ResizeHandles() {
  * Renders nothing in a plain browser.
  */
 export function TitleBar() {
-  const desk = getDesktop();
+  const desk = useDesktop();
   const { settings } = useSettings();
   const pathname = usePathname();
   const [maximized, setMaximized] = useState(false);

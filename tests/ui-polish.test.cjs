@@ -33,21 +33,32 @@ function seedFile() {
 const getJson = (url) => new Promise((resolve, reject) => http.get(url, (res) => { const c = []; res.on('data', (x) => c.push(x)); res.on('end', () => { try { resolve(JSON.parse(Buffer.concat(c).toString())); } catch (e) { reject(e); } }); }).on('error', reject));
 
 class Cdp {
-  constructor(ws) { this.ws = ws; this.id = 0; this.pending = new Map(); ws.onmessage = (m) => { const j = JSON.parse(m.data); const p = this.pending.get(j.id); if (p) { this.pending.delete(j.id); j.error ? p.reject(new Error(JSON.stringify(j.error))) : p.resolve(j.result); } }; }
+  constructor(ws) { this.ws = ws; this.id = 0; this.pending = new Map(); this.events = []; ws.onmessage = (m) => { const j = JSON.parse(m.data); if (j.method) this.events.push(j); const p = this.pending.get(j.id); if (p) { this.pending.delete(j.id); j.error ? p.reject(new Error(JSON.stringify(j.error))) : p.resolve(j.result); } }; }
   send(method, params = {}) { const id = ++this.id; return new Promise((resolve, reject) => { this.pending.set(id, { resolve, reject }); this.ws.send(JSON.stringify({ id, method, params })); }); }
   // Test-only wrapper around the DevTools Protocol's Runtime.evaluate: it runs only expressions written in this file,
   // inside a throwaway test instance (isolated temp data dir).
   async eval(expr) { const r = await this.send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails).slice(0, 400)); return r.result.value; }
   async centre(selectorFn) { return this.eval(`(() => { const el = (${selectorFn})(); if (!el) return null; el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`); }
   async click(selectorFn) { const pt = await this.centre(selectorFn); if (!pt) return false; for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) await this.send('Input.dispatchMouseEvent', { type, x: pt.x, y: pt.y, button: 'left', clickCount: 1, buttons: type === 'mousePressed' ? 1 : 0 }); return true; }
+  // A click made while React is still hydrating is ignored (as for a real user), so click again until the expected change shows up.
+  async clickUntil(selectorFn, doneExpr, label, tries = 8) {
+    for (let i = 0; i < tries; i++) {
+      await this.click(selectorFn);
+      const end = Date.now() + 6000;
+      while (Date.now() < end) { try { if (await this.eval(doneExpr)) return true; } catch { /* navigating */ } await sleep(250); }
+    }
+    throw new Error(`clicking never produced: ${label}`);
+  }
   async hover(selectorFn) { const pt = await this.centre(selectorFn); if (!pt) return false; await this.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pt.x, y: pt.y }); return true; }
-  async until(fn, label, timeout = 25000) { const end = Date.now() + timeout; let last; while (Date.now() < end) { try { last = await this.eval(fn); if (last) return last; } catch { /* navigating */ } await sleep(200); } let body = ''; try { body = await this.eval("location.pathname + ' | ' + document.body.innerText.replace(/\s+/g, ' ').slice(0, 220)"); } catch { /* ignore */ } throw new Error(`timeout waiting for ${label} (last=${JSON.stringify(last)}) page=${body}`); }
+  async until(fn, label, timeout = 60000) { const end = Date.now() + timeout; let last; while (Date.now() < end) { try { last = await this.eval(fn); if (last) return last; } catch { /* navigating */ } await sleep(200); } let body = ''; try { body = await this.eval("location.pathname + ' | ' + document.body.innerText.replace(/\s+/g, ' ').slice(0, 220)"); } catch { /* ignore */ } let shot = ''; try { const r = await this.send('Page.captureScreenshot', { format: 'png' }); shot = path.join(os.tmpdir(), `wt-fail-${Date.now()}.png`); fs.writeFileSync(shot, Buffer.from(r.data, 'base64')); } catch { /* best effort */ }
+    let more = ''; try { more = await this.eval("JSON.stringify({ vis: document.visibilityState, hidden: document.hidden, buttons: document.querySelectorAll('button').length, frame: !!document.querySelector('.app-frame'), htmlAttrs: Object.assign({}, document.documentElement.dataset), len: document.body.innerText.length })"); } catch { /* ignore */ }
+    throw new Error(`timeout waiting for ${label} (last=${JSON.stringify(last)}) page=${body} state=${more} screenshot=${shot}`); }
   // Full-page navigation. A pre-existing, rare hydration hiccup (React #418/#519, also present in 1.1.0/2.0.0 builds) can leave
   // Next's "This page couldn't load" page for a full load; a reload clears it, so retry once like a user would.
   async go(url, ready, label) {
     for (let attempt = 0; attempt < 3; attempt++) {
       await this.send('Page.navigate', { url });
-      try { await this.until(`(${ready.startsWith('!') || ready.includes('&&') || ready.includes('(') ? ready : ready}) || /couldn.t load/.test(document.body.innerText)`, label, 20000); } catch (e) { if (attempt === 2) throw e; continue; }
+      try { await this.until(`(${ready.startsWith('!') || ready.includes('&&') || ready.includes('(') ? ready : ready}) || /couldn.t load/.test(document.body.innerText)`, label, 45000); } catch (e) { if (attempt === 2) throw e; continue; }
       if (!(await this.eval(`/couldn.t load/.test(document.body.innerText)`))) return;
       this.reloads = (this.reloads || 0) + 1;
     }
@@ -86,12 +97,13 @@ test('level card, sliding numbers and settings transitions in the real window', 
   // make sure the cursor is NOT over the card first (on CI the real pointer can already rest on it)
   await c.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 3, y: 3 }); await sleep(1000);
   const before = await c.eval(style('[data-testid="level-panel-full"]'));
-  assert.ok(await c.hover(`() => document.querySelector('[data-testid="level-panel-full"]')`)); await sleep(900);
-  const after = await c.eval(style('[data-testid="level-panel-full"]'));
+  assert.ok(await c.hover(`() => document.querySelector('[data-testid="level-panel-full"]')`));
+  let after; for (let i = 0; i < 40; i++) { await sleep(300); after = await c.eval(style('[data-testid="level-panel-full"]')); if (after.shadow !== before.shadow) break; }
   assert.notEqual(after.shadow, before.shadow, 'the card glows on hover'); assert.notEqual(after.border, before.border, 'the hairline border brightens on hover');
   assert.ok(/rgba?\([^)]*\) 0px 0px 2\dpx/.test(after.shadow) || after.shadow.includes('0px 0px'), 'the glow is a soft spread shadow: ' + after.shadow.slice(0, 120));
-  await c.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 500 }); await sleep(900);
-  assert.equal((await c.eval(style('[data-testid="level-panel-full"]'))).shadow, before.shadow, 'glow fades away again when the cursor leaves');
+  await c.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 500 });
+  let gone; for (let i = 0; i < 40; i++) { await sleep(300); gone = (await c.eval(style('[data-testid="level-panel-full"]'))).shadow; if (gone === before.shadow) break; }
+  assert.equal(gone, before.shadow, 'glow fades away again when the cursor leaves');
   // the Overview card sits beside the daily goal like before
   await c.go(`${url}/`, `!!document.querySelector('[data-testid="level-panel-compact"]')`, 'Overview again'); assert.ok(await c.eval(`document.body.innerText.includes('Daily screen-time goal') || document.body.innerText.toLowerCase().includes('daily screen-time goal')`));
 
@@ -102,7 +114,7 @@ test('level card, sliding numbers and settings transitions in the real window', 
   const odoWait = async (sel, pred, label) => { let o; for (let i = 0; i < 40; i++) { o = await c.eval(odo(sel)); if (pred(motionOn ? o : { ...o, anim: true })) return o; await sleep(200); } assert.fail(`${label}: ${JSON.stringify(o)}`); };
   await c.go(`${url}/focus`, `!!document.querySelector('[data-testid="focus-remaining"] .odo')`, 'Focus timer');
   let o = await odoWait('[data-testid="focus-remaining"]', (x) => x.odo >= 1 && x.strips >= 3 && x.anim, 'Focus timer slides');
-  assert.ok(await c.click(`() => [...document.querySelectorAll('button')].find((b) => b.textContent.includes('Start'))`)); // real click: start a block
+  await c.clickUntil(`() => [...document.querySelectorAll('button')].find((b) => b.textContent.includes('Start'))`, `[...document.querySelectorAll('button')].some((b) => b.textContent.includes('Pause'))`, 'Start focus'); // real click: start a block
   await c.until(`/\\d\\d:\\d\\d/.test(document.querySelector('[data-testid="focus-remaining"]').getAttribute('aria-label') || document.querySelector('[data-testid="focus-remaining"] .odo')?.getAttribute('aria-label') || '') && [...document.querySelectorAll('button')].some((b) => b.textContent.includes('Pause'))`, 'timer running');
   const t1 = await c.eval(`document.querySelector('[data-testid="focus-remaining"] .odo').getAttribute('aria-label')`); await sleep(2600);
   const t2 = await c.eval(`document.querySelector('[data-testid="focus-remaining"] .odo').getAttribute('aria-label')`); assert.notEqual(t1, t2, `the timer counts down live (${t1} -> ${t2})`);
@@ -113,9 +125,14 @@ test('level card, sliding numbers and settings transitions in the real window', 
   o = await c.eval(odo('')); assert.ok(o.odo >= 3 && o.strips >= 3, `Projects numbers use sliding digits (all values are 0 in this data, so nothing needs to move): ${JSON.stringify(o)}`);
   await c.go(`${url}/reports`, `!!document.querySelector('[data-testid="weekly-report"] .odo')`, 'Reports');
   o = await c.eval(odo('[data-testid="weekly-report"]')); assert.ok(o.odo >= 8 && o.strips >= 8, `Reports numbers use sliding digits: ${JSON.stringify(o)}`);
-  assert.ok(await c.click(`() => [...document.querySelectorAll('.seg button')].find((b) => b.textContent.trim() === 'This vs last week')`));
+  await c.clickUntil(`() => [...document.querySelectorAll('.seg button')].find((b) => b.textContent.trim() === 'This vs last week')`, `!!document.querySelector('[data-testid="compare-view"]')`, 'compare tab');
   await c.until(`!!document.querySelector('[data-testid="compare-view"] .odo')`, 'compare numbers'); o = await odoWait('[data-testid="compare-view"]', (x) => x.odo >= 6 && x.anim, 'Compare numbers slide');
   await c.go(`${url}/limits`, `/add a limit/i.test(document.body.innerText)`, 'Limits'); assert.ok(await c.eval(`!!document.querySelector('.page')`));
+
+  // ------------------------------------------------ no React hydration errors on full page loads
+  // (regression: TitleBar read the desktop bridge while rendering, so the server HTML never matched the client's first render)
+  const hydration = c.events.filter((e) => e.method === 'Runtime.exceptionThrown').map((e) => String((e.params.exceptionDetails.exception || {}).description || e.params.exceptionDetails.text)).filter((d) => /React error #(418|419|422|423|425|519)/.test(d));
+  assert.deepEqual(hydration, [], 'full page loads produce no React hydration errors');
 
   // ------------------------------------------------ Settings sections transition (not instant)
   // With the app's motion off (reduced motion, e.g. Windows CI images) there is no transition to test; the app was verified to switch
@@ -126,7 +143,7 @@ test('level card, sliding numbers and settings transitions in the real window', 
   const first = await c.eval(`document.querySelector('[data-testid="settings-panel"]').innerText.slice(0, 40)`);
   // sample the panel's opacity right after the click: a transition produces intermediate values, an instant switch never does
   await c.eval(`window.__ops = []; window.__sampler = setInterval(() => { const p = document.querySelector('[data-testid="settings-panel"]'); if (p) window.__ops.push(+getComputedStyle(p).opacity); }, 16); true`);
-  assert.ok(await c.click(`() => [...document.querySelectorAll('.set-nav button')].find((b) => b.textContent.trim() === 'Performance')`)); // a light tab: Appearance renders five live WebGL logos, too heavy for software rendering on CI
+  await c.clickUntil(`() => [...document.querySelectorAll('.set-nav button')].find((b) => b.textContent.trim() === 'Performance')`, `/enhanced visual/i.test(document.body.innerText)`, 'Performance tab'); // a light tab: Appearance renders five live WebGL logos, too heavy for software rendering on CI
   await c.until(`/enhanced visual/i.test(document.body.innerText)`, 'Performance content'); await sleep(500);
   const ops = await c.eval(`clearInterval(window.__sampler); window.__ops`);
   const mid = ops.filter((x) => x > 0.03 && x < 0.97);

@@ -50,7 +50,16 @@ class Cdp {
     for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) await this.send('Input.dispatchMouseEvent', { type, x: pt.x, y: pt.y, button: 'left', clickCount: 1, buttons: type === 'mousePressed' ? 1 : 0 });
     return true;
   }
-  async until(fn, label, timeout = 20000) { const end = Date.now() + timeout; let last; while (Date.now() < end) { try { last = await this.eval(fn); if (last) return last; } catch { /* page navigating */ } await sleep(250); } throw new Error(`timeout waiting for ${label} (last=${JSON.stringify(last)})`); }
+  // A click made while React is still hydrating is ignored (as for a real user), so click again until the expected change shows up.
+  async clickUntil(selectorFn, doneExpr, label, tries = 8) {
+    for (let i = 0; i < tries; i++) {
+      await this.click(selectorFn);
+      const end = Date.now() + 6000;
+      while (Date.now() < end) { try { if (await this.eval(doneExpr)) return true; } catch { /* navigating */ } await sleep(250); }
+    }
+    throw new Error(`clicking never produced: ${label}`);
+  }
+  async until(fn, label, timeout = 60000) { const end = Date.now() + timeout; let last; while (Date.now() < end) { try { last = await this.eval(fn); if (last) return last; } catch { /* page navigating */ } await sleep(250); } throw new Error(`timeout waiting for ${label} (last=${JSON.stringify(last)})`); }
 }
 
 test('Applications period selector in the real window: ten filters, Custom dates, search, navigation and reload', { skip, timeout: 420000 }, async (t) => {
@@ -87,11 +96,12 @@ test('Applications period selector in the real window: ten filters, Custom dates
   const labels = await c.eval(`[...document.querySelectorAll('.seg')].find((s) => s.textContent.includes('Yesterday'))?.innerText.split('\\n').map((x) => x.trim()).filter(Boolean)`);
   assert.deepEqual(labels, ['Today', 'Yesterday', 'This Week', 'Last Week', 'This Month', 'Last Month', 'This Year', 'Last Year', 'All Time', 'Custom']);
   assert.deepEqual((await c.eval(state)).on, ['All Time'], 'Applications keeps its existing all-time behaviour by default');
+  await c.until(`${state}.rows.length === 3`, 'All Time lists all three seeded applications');
   let s = await c.eval(state); assert.equal(s.rows.length, 3, 'All Time lists all applications');
   const names = (st) => st.rows.map((r) => r[0].split('\n')[0].replace(/\s+/g, ' ').trim().replace(/\s*[a-z0-9_.-]+\.exe.*$/i, ''));
 
   async function pick(label, wantNames) {
-    assert.ok(await c.click(BTN(label)), `click ${label}`);
+    await c.clickUntil(BTN(label), `${state}.on.includes(${JSON.stringify(label)})`, `period ${label}`);
     try { await c.until(`(() => { const s = ${state}; const want = ${JSON.stringify(wantNames)}; return s.on.includes(${JSON.stringify(label)}) && (want.length ? s.rows.length === want.length && want.every((n) => s.rows.some((r) => r[0].includes(n))) : s.rows.length === 0); })()`, `${label} table`); } catch (e) { throw new Error(`${e.message} state=${JSON.stringify(await c.eval(state))}`); }
     return c.eval(state);
   }

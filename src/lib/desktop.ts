@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react";
+
 /** Bridge exposed by desktop/preload.cjs (Electron). Undefined when running in a plain browser. */
 export type DesktopApi = {
   platform: string;
@@ -41,4 +43,14 @@ export type UpdateInfo = {
 export function getDesktop(): DesktopApi | undefined {
   if (typeof window === "undefined") return undefined;
   return (window as unknown as { watchtower?: DesktopApi }).watchtower;
+}
+
+const noSubscription = () => () => {};
+/**
+ * The desktop bridge for use while RENDERING. The server (and the very first hydration pass) see "no bridge", the client sees the
+ * real one right after hydration: reading window.watchtower directly in render made the server HTML differ from the client's first
+ * render inside Electron, so React discarded the server HTML on every full page load (React errors #418/#519).
+ */
+export function useDesktop(): DesktopApi | undefined {
+  return useSyncExternalStore(noSubscription, getDesktop, () => undefined);
 }

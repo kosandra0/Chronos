@@ -8,7 +8,7 @@ import { ProgressBar } from "@/components/V2Parts";
 import { Select } from "@/components/Select";
 import { THEMES, customThemeVars } from "@/lib/settings-shared";
 import { APP_VERSION } from "@/lib/changelog";
-import { getDesktop, type UpdateInfo } from "@/lib/desktop";
+import { useDesktop, type UpdateInfo } from "@/lib/desktop";
 import { fmtBytes } from "@/lib/time";
 import type { Gradient } from "@/lib/v2/themepack";
 
@@ -161,7 +161,7 @@ export function ThemePacks() {
 // ------------------------------------------------------------------ updates
 export function UpdatesPanel() {
   const { settings, update: save } = useSettings();
-  const desktop = getDesktop();
+  const desktop = useDesktop();
   const [info, setInfo] = useState<UpdateInfo | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ received: number; total: number } | null>(null);
