@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite"],
   outputFileTracingExcludes: {
     // Never drag build outputs, installers or test artefacts into the packaged server.
-    "/*": ["./release/**/*", "./installer/**/*", "./logs/**/*", "./build/**/*", "./.playwright-mcp/**/*", "./tests/**/*", "./scripts/**/*", "./release-notes/**/*", "./UI/**/*"],
+    "/*": ["./release/**/*", "./installer/**/*", "./logs/**/*", "./build/**/*", "./.playwright-mcp/**/*", "./tests/**/*", "./scripts/**/*", "./release-notes/**/*", "./UI/**/*", "./docs/**/*"],
   },
   outputFileTracingIncludes: {
     "/*": ["./agent/watchtower-agent.ps1"],

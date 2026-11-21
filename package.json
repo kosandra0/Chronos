@@ -87,6 +87,7 @@
           "!release/**",
           "!installer/**",
           "!UI/**",
+          "!docs/**",
           "!logs/**",
           "!build/**",
           "!.playwright-mcp/**",
