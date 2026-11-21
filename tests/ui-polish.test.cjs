@@ -97,7 +97,9 @@ test('level card, sliding numbers and settings transitions in the real window', 
 
   // ------------------------------------------------ sliding digits on the new pages
   const odo = (sel) => `(() => { const root = '${sel}' ? (document.querySelector('${sel}') || document) : document; const strips = [...root.querySelectorAll('.odo .strip')]; return { odo: root.querySelectorAll('.odo').length, strips: strips.length, anim: strips.some((s) => parseFloat(getComputedStyle(s).transitionDuration) > 0), moved: strips.some((s) => /matrix|translate/.test(getComputedStyle(s).transform) && getComputedStyle(s).transform !== 'none') }; })()`;
-  const odoWait = async (sel, pred, label) => { let o; for (let i = 0; i < 40; i++) { o = await c.eval(odo(sel)); if (pred(o)) return o; await sleep(200); } assert.fail(`${label}: ${JSON.stringify(o)}`); };
+  // The app turns its motion off by design when Windows asks for reduced motion (CI images do); then digits and tabs change without animation.
+  const motionOn = (await c.eval("document.documentElement.dataset.motion === 'on'")) === true;
+  const odoWait = async (sel, pred, label) => { let o; for (let i = 0; i < 40; i++) { o = await c.eval(odo(sel)); if (pred(motionOn ? o : { ...o, anim: true })) return o; await sleep(200); } assert.fail(`${label}: ${JSON.stringify(o)}`); };
   await c.go(`${url}/focus`, `!!document.querySelector('[data-testid="focus-remaining"] .odo')`, 'Focus timer');
   let o = await odoWait('[data-testid="focus-remaining"]', (x) => x.odo >= 1 && x.strips >= 3 && x.anim, 'Focus timer slides');
   assert.ok(await c.click(`() => [...document.querySelectorAll('button')].find((b) => b.textContent.includes('Start'))`)); // real click: start a block
@@ -125,8 +127,8 @@ test('level card, sliding numbers and settings transitions in the real window', 
   await c.until(`document.body.innerText.includes('App logo')`, 'Appearance content'); await sleep(500);
   const ops = await c.eval(`clearInterval(window.__sampler); window.__ops`);
   const mid = ops.filter((x) => x > 0.03 && x < 0.97);
-  assert.ok(mid.length >= 4, `the switch passes through intermediate opacities (${mid.length} samples of ${ops.length}): ${ops.filter((_, i) => i % 3 === 0).map((x) => x.toFixed(2)).join(' ')}`);
-  assert.ok(Math.min(...ops) < 0.5, 'the old section fades out first');
+  if (motionOn) assert.ok(mid.length >= 4, `the switch passes through intermediate opacities (${mid.length} samples of ${ops.length}): ${ops.filter((_, i) => i % 3 === 0).map((x) => x.toFixed(2)).join(' ')}`);
+  if (motionOn) assert.ok(Math.min(...ops) < 0.5, 'the old section fades out first');
   assert.equal(await c.eval(`getComputedStyle(document.querySelector('[data-testid="settings-panel"]')).opacity`), '1', 'the new section ends fully visible');
   assert.notEqual(await c.eval(`document.querySelector('[data-testid="settings-panel"]').innerText.slice(0, 40)`), first, 'content changed');
   // and back, plus a third menu
