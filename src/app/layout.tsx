@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 // Applies cached appearance before first paint (avoids theme flash).
 const bootScript = `(function(){try{var s=JSON.parse(localStorage.getItem('chronos.settings')||'{}');var d=document.documentElement;
-var t=s.theme||'dark';if(t==='system')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
+var t=s.theme||'dark';if(s.themeScheduleEnabled){var pm=function(x){var m=/^([0-9]{1,2}):([0-9]{2})$/.exec(x||'');return m?(+m[1])*60+(+m[2]):null};var a=pm(s.themeDayStart),b=pm(s.themeNightStart),nw=new Date(),n=nw.getHours()*60+nw.getMinutes();if(a!==null&&b!==null&&s.themeDay&&s.themeNight){var dy=a===b?true:(a<b?(n>=a&&n<b):(n>=a||n<b));t=dy?s.themeDay:s.themeNight;}}if(t==='system')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
 d.dataset.theme=t;if(t==='custom'){var cv=JSON.parse(localStorage.getItem('chronos.customvars')||'{}');for(var ck in cv){if(ck==='--scheme')d.style.colorScheme=cv[ck];else d.style.setProperty(ck,cv[ck]);}}d.dataset.accent=s.accent||'teal';d.dataset.density=s.density||'comfortable';d.dataset.font=s.font||'inter';
 var off=s.animations===false||s.performanceMode==='performance'||matchMedia('(prefers-reduced-motion: reduce)').matches;
 d.dataset.motion=off?'off':'on';d.dataset.transparency=(s.transparency!==false&&s.performanceMode!=='performance')?'on':'off';

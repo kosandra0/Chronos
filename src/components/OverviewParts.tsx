@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy } from "lucide-react";
 import { fireEvent } from "@/lib/events";
-import { Card, Skeleton, useFetch } from "./ui";
+import { Skeleton, useFetch } from "./ui";
 import { useSettings } from "./Providers";
-import { Odometer } from "./AnimText";
+import { LevelPanel } from "./LevelPanel";
 
 /** The blank dash after the greeting: type your name and it is saved. */
 export function NameField() {
@@ -42,26 +41,10 @@ type Prog = {
   achievements: { id: string; unlockedAt: string | null }[];
 };
 
-/** Compact level and XP summary shown at the top of the Overview. */
+/** Compact level and XP summary shown at the top of the Overview (shares its design with the Achievements card). */
 export function LevelCard() {
   const { data } = useFetch<Prog>("/api/achievements", { refreshMs: 20000 });
   if (!data) return <Skeleton h={118} />;
-  const l = data.level;
   const unlocked = data.achievements.filter((a) => a.unlockedAt).length;
-  return (
-    <Card hover>
-      <div className="lvl">
-        <div className="lvl-badge" key={l.level}>
-          <span className="faint" style={{ fontSize: "0.6rem", letterSpacing: "0.12em" }}>LEVEL</span>
-          <Odometer text={String(l.level)} className="lvl-num" />
-        </div>
-        <div className="lvl-main">
-          <div className="lvl-name"><Trophy size={15} style={{ color: "var(--accent)" }} /> {l.name}</div>
-          <div className="muted lvl-xp"><Odometer text={`${data.xp} XP`} /> · <Odometer text={`${l.toNext}`} /> XP to level {l.level + 1}</div>
-          <div className="progress" style={{ marginTop: 10 }}><i style={{ width: `${Math.max(2, l.progress * 100)}%` }} /></div>
-          <div className="lvl-foot faint"><span>{l.currentFloor} XP</span><span><Odometer text={`${unlocked}`} /> / {data.achievements.length} achievements</span><span>{l.nextAt} XP</span></div>
-        </div>
-      </div>
-    </Card>
-  );
+  return <LevelPanel variant="compact" level={data.level} xp={data.xp} achievements={{ unlocked, total: data.achievements.length }} />;
 }

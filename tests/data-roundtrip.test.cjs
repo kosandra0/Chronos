@@ -17,6 +17,8 @@ const strip = (j) => {
   const c = JSON.parse(JSON.stringify(j));
   delete c.exportedAt; delete c.appVersion;
   if (c.settings) delete c.settings.backupDir; // intentionally machine-specific
+  // 2.0 delivery-dedupe markers (v2.sent.*) hold the time each server delivered a notification: the key is what matters
+  if (c.kv) for (const k of Object.keys(c.kv)) if (k.startsWith('v2.sent.')) c.kv[k] = 'sent';
   const byId = (a, b) => String(a.id).localeCompare(String(b.id));
   c.applications.sort(byId); c.sessions.sort(byId); c.gamification.achievements.sort(byId); c.backupMetadata.sort(byId);
   return c;

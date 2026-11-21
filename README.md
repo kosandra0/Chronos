@@ -1,8 +1,27 @@
 # WatchTower — Windows Usage Intelligence
 
+<p align="center">
+  <img src="docs/images/watchtower-logo-rotating.webp" width="200" alt="WatchTower: the rotating 3D watchtower logo with its sweeping yellow searchlight">
+</p>
+
 > WatchTower was formerly called Chronos. An older `%APPDATA%\Chronos` data folder is moved to `%APPDATA%\WatchTower` automatically.
 
 WatchTower is packaged as a Windows desktop application. Open the installed app or the portable `.exe`; the desktop host starts the local application server and the Windows monitoring agent automatically.
+
+## What's new in 2.0.0
+
+- **Focus mode** with short/long breaks, gentle eye-rest reminders and a timer that survives restarts and sleep.
+- **Application limits** (per application or category) that warn you at your threshold and when the limit is reached. They never block anything.
+- **Weekly screen-time report** for the last completed week, delivered once a week as a desktop notification.
+- **Productivity classes and goals** (productive / neutral / distracting) with a daily score and goal progress.
+- **Compare periods**: this week vs last week and this month vs last month.
+- **Projects and client time reports** with billable time, hourly rates, currencies and CSV export.
+- **Automatic theme schedule** and **theme packs** (save, preview, export and safely import gradient presets).
+- **Update checks** against this repository's releases, with SHA-256 verification and install only after you agree.
+- **Applications** now has the same period selector as Statistics (Today ... All Time, Custom).
+- Sliding-digit numbers on the new pages, smooth Settings transitions and a redesigned Level / XP card.
+
+The full list is in [release-notes/v2.0.0.md](release-notes/v2.0.0.md).
 
 ## Windows executable build
 
@@ -49,7 +68,7 @@ Expected subdirectories:
 
 The database is created automatically on first launch. Timestamps are stored as UTC `timestamptz`; durations are 64-bit integer milliseconds. Daily statistics are derived from session records so they can be rebuilt.
 
-Export formats: JSON, Markdown and TXT. All three formats (JSON, Markdown and TXT) contain every record and can be imported back; Markdown and TXT reports end with a machine-readable data block.
+Export formats: JSON, Markdown and TXT. All three formats (JSON, Markdown and TXT) contain every record (including projects, session assignments, limits, productivity choices and theme presets) and can be imported back; Markdown and TXT reports end with a machine-readable data block.
 
 ## First launch and validation
 
@@ -65,4 +84,5 @@ Export formats: JSON, Markdown and TXT. All three formats (JSON, Markdown and TX
 - Automated checks cover launch, health, agent heartbeat, foreground tracking and persistence. Verify idle transitions, elevated-process limitations and lock/resume behavior on your own PC.
 - UAC secure desktop, protected processes, Windows sign-in screens, disconnected sessions and other OS-protected surfaces may not expose normal foreground-process metadata. WatchTower reports detection limitations rather than bypassing OS security.
 - The monitor runs while WatchTower is open. A Windows service / always-on startup component is not included in this packaging pass.
-- The desktop package is not code-signed. Windows SmartScreen may show an unfamiliar-app warning until the binary is signed and its reputation is established.
+- The desktop package is not code-signed. Windows SmartScreen may show an unfamiliar-app warning until the binary is signed and its reputation is established. Signing is supported by the build (see [BUILD-WINDOWS.md](BUILD-WINDOWS.md)) but needs a trusted certificate, which the published builds do not use yet.
+- The portable build cannot update itself; use the installer for automatic update checks.

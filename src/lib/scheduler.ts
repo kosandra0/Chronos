@@ -5,6 +5,7 @@ import { createBackup } from "./dataio";
 import { reconcileStale } from "./engine";
 import { getSettings } from "./settings";
 import { BACKUP_FREQ_MS } from "./settings-shared";
+import { v2Tick } from "./v2/store";
 
 const g = globalThis as typeof globalThis & { __chronosScheduler?: NodeJS.Timeout };
 
@@ -21,6 +22,9 @@ let lastAttempt = 0;
 export async function tick() {
   try {
     await reconcileStale();
+    // focus timer, limit and weekly-report notifications (queued for the desktop host). Automated tests drive this
+    // themselves with an explicit clock (WATCHTOWER_TEST_HOOKS), so the real-time tick is skipped there.
+    if (process.env.WATCHTOWER_TEST_HOOKS !== "1") await v2Tick();
     const s = await getSettings();
     if (!s.backupEnabled) return;
     const info = await nextBackupInfo();

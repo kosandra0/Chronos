@@ -1,6 +1,6 @@
 {
   "name": "watchtower",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "private": true,
   "description": "WatchTower - Windows screen time and application usage intelligence",
   "main": "desktop/main.cjs",
@@ -17,7 +17,8 @@
     "test": "node --test tests/*.test.cjs",
     "test:packaged": "node scripts/verify-packaged.cjs",
     "desktop:dir": "npm run build && npm run desktop:clean && electron-builder --win dir --x64 --publish never",
-    "icons": "node scripts/make-icons.cjs"
+    "icons": "node scripts/make-icons.cjs",
+    "sign:status": "node scripts/signing-status.cjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",
@@ -85,6 +86,7 @@
           "!postcss.config.mjs",
           "!release/**",
           "!installer/**",
+          "!UI/**",
           "!logs/**",
           "!build/**",
           "!.playwright-mcp/**",

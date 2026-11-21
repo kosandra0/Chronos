@@ -28,4 +28,12 @@ contextBridge.exposeInMainWorld('watchtower', {
   trayClose: () => ipcRenderer.send('wt:tray-close'),
   quit: () => ipcRenderer.send('wt:quit'),
   setLogo: (id) => ipcRenderer.send('wt:set-logo', String(id)),
+  update: {
+    check: () => ipcRenderer.invoke('wt:update-check'),
+    download: () => ipcRenderer.invoke('wt:update-download'),
+    install: () => ipcRenderer.invoke('wt:update-install'),
+    skip: (version) => ipcRenderer.invoke('wt:update-skip', String(version)),
+    openPage: () => ipcRenderer.invoke('wt:update-page'),
+    onProgress: (cb) => listen('wt:update-progress', cb),
+  },
 });

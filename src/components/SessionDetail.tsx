@@ -2,7 +2,9 @@
 
 import type { SessionRow } from "@/lib/stats";
 import { formatDetailed, fmtDate } from "@/lib/time";
-import { AppIcon, CategoryBadge } from "./ui";
+import { AppIcon, CategoryBadge, useFetch } from "./ui";
+import { useState } from "react";
+import { Select } from "./Select";
 import { preciseTime } from "./DayTimeline";
 
 const REASONS: Record<string, string> = {
@@ -14,6 +16,28 @@ const REASONS: Record<string, string> = {
   "chronos-closed": "WatchTower window closed",
   imported: "Imported record",
 };
+
+function ProjectPicker({ id }: { id: string }) {
+  const projects = useFetch<{ projects: { id: string; name: string; client: string; archived: boolean }[] }>("/api/v2/projects");
+  const current = useFetch<{ projectId: string | null }>(`/api/v2/projects/assign?session=${encodeURIComponent(id)}`);
+  const [override, setOverride] = useState<string | null | undefined>(undefined);
+  const value = override !== undefined ? override : current.data?.projectId ?? null;
+  const choose = async (projectId: string | null) => {
+    setOverride(projectId);
+    const r = await fetch("/api/v2/projects/assign", { method: "POST", body: JSON.stringify({ sessionIds: [id], projectId }) });
+    if (!r.ok) setOverride(undefined);
+  };
+  const list = (projects.data?.projects ?? []).filter((p) => !p.archived || p.id === value);
+  return (
+    <div className="set-row" style={{ padding: "9px 0" }} data-testid="session-project">
+      <div className="muted" style={{ fontSize: "0.88rem" }}>Project</div>
+      <Select className="select" value={value ?? ""} onChange={(e) => choose(e.target.value || null)} aria-label="Project for this session">
+        <option value="">No project</option>
+        {list.map((p) => <option key={p.id} value={p.id}>{p.name}{p.client ? ` · ${p.client}` : ""}</option>)}
+      </Select>
+    </div>
+  );
+}
 
 export function SessionDetail({ s }: { s: SessionRow }) {
   const special = s.type === "app" ? undefined : (s.type as "desktop" | "idle" | "locked");
@@ -43,6 +67,7 @@ export function SessionDetail({ s }: { s: SessionRow }) {
           </div>
         </div>
       </div>
+      {(s.type === "app" || s.type === "desktop") && !s.open && <ProjectPicker id={s.id} />}
       {rows.map(([k, v]) => (
         <div key={k} className="set-row" style={{ padding: "9px 0" }}>
           <div className="muted" style={{ fontSize: "0.88rem" }}>

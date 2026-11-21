@@ -64,7 +64,7 @@ test('packaged server bundle is lean (no build outputs or installers dragged in)
       if (e.isDirectory()) stack.push(p); else bytes += fs.statSync(p).size;
     }
   }
-  for (const bad of ['release', 'installer', 'logs', 'build', 'tests', 'src']) {
+  for (const bad of ['release', 'installer', 'logs', 'build', 'tests', 'src', 'UI']) {
     assert.ok(!fs.existsSync(path.join(packagedServerDir, bad)), `${bad}/ must not be inside the packaged server`);
   }
   assert.ok(bytes < 150 * 1024 * 1024, `packaged server is ${(bytes / 1048576).toFixed(0)} MB (expected < 150 MB)`);

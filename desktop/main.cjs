@@ -11,7 +11,8 @@
  *
  * NOTE: data lives in %APPDATA%\WatchTower. An older %APPDATA%\Chronos folder is moved there on first start.
  */
-const { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, powerMonitor, screen, session, shell, Tray, utilityProcess } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Notification, powerMonitor, screen, session, shell, Tray, utilityProcess } = require('electron');
+const v2host = require('./v2-host.cjs');
 const { spawn, execFile } = require('node:child_process');
 const { request } = require('node:http');
 const { createServer } = require('node:net');
@@ -934,6 +935,17 @@ async function startWatchTower() {
   const hidden = prefs.startMinimized;
   createWindow({ hidden });
   createTray();
+  // 2.0: desktop notifications (focus, limits, weekly report) and the update flow
+  v2host.init({
+    app, Notification, shell, dialog, ipcMain,
+    getServerUrl: () => serverUrl,
+    getDataRoot: () => dataRoot,
+    showMain,
+    quitReally,
+    trusted,
+    sendToMain: (channel, payload) => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload); },
+    log,
+  });
   applyLogo(logoPref.id, { startup: true });
   if (prefs.launchAtStartup) applyLoginItem();
   if (hidden) log('INFO', 'started minimized to the tray');

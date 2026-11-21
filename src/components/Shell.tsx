@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Search, AppWindow, BarChart3, History, LayoutDashboard, List, PanelLeftClose, PanelLeftOpen, ScrollText, Settings, Trophy } from "lucide-react";
+import { Search, AppWindow, BarChart3, FileText, FolderKanban, Gauge, History, LayoutDashboard, List, PanelLeftClose, PanelLeftOpen, ScrollText, Settings, Target, Timer, Trophy } from "lucide-react";
 import { APP_NAME, NAV } from "@/lib/settings-shared";
 import { APP_VERSION } from "@/lib/changelog";
 import { getDesktop } from "@/lib/desktop";
@@ -21,6 +21,11 @@ const ICONS = {
   applications: AppWindow,
   sessions: List,
   timeline: History,
+  focus: Timer,
+  limits: Gauge,
+  productivity: Target,
+  projects: FolderKanban,
+  reports: FileText,
   achievements: Trophy,
   settings: Settings,
 } as const;

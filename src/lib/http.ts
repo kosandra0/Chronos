@@ -10,8 +10,9 @@ export async function handle(fn: () => Promise<unknown>): Promise<Response> {
     if (out instanceof Response) return out;
     return Response.json(out, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
-    console.error("[chronos api]", e);
-    return Response.json({ error: e instanceof Error ? e.message : "Unexpected server error" }, { status: 500 });
+    const status = typeof (e as { status?: unknown })?.status === "number" ? ((e as { status: number }).status) : 500;
+    if (status >= 500) console.error("[chronos api]", e);
+    return Response.json({ error: e instanceof Error ? e.message : "Unexpected server error" }, { status });
   }
 }
 
@@ -23,4 +24,9 @@ export function rangeFrom(url: URL): DateRange {
 
 export function badRequest(message: string, status = 400) {
   return Response.json({ error: message }, { status });
+}
+
+export async function bodyOf(req: Request): Promise<Record<string, unknown>> {
+  const j = await req.json().catch(() => ({}));
+  return j && typeof j === "object" && !Array.isArray(j) ? (j as Record<string, unknown>) : {};
 }

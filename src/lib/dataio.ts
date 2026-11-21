@@ -60,6 +60,9 @@ export type ExportFile = {
   backupMetadata: { id: string; createdAt: string; status: string; sizeBytes: number; kind: string; filePath?: string; message?: string | null }[];
   /** Internal key/value records (achievement events etc.) stored next to the settings. */
   kv?: Record<string, string>;
+  /** 2.0: projects and the sessions assigned to them (optional so older exports still import). */
+  projects?: { id: string; name: string; client: string; color: string; billable: boolean; hourlyRate: number; archived: boolean; createdAt: string }[];
+  sessionProjects?: { sessionId: string; projectId: string }[];
 };
 
 export async function buildExport(): Promise<ExportFile> {
@@ -79,6 +82,8 @@ export async function buildExport(): Promise<ExportFile> {
   const xp = ach.reduce((n, a) => n + a.xpAwarded, 0);
   const kvRows = await db.select().from(settingsTable);
   const kv = Object.fromEntries(kvRows.filter((r) => !(r.key in DEFAULT_SETTINGS)).map((r) => [r.key, r.value]));
+  const proj = (await db.execute(sql`SELECT id, name, client, color, billable, hourly_rate, archived, created_at FROM projects ORDER BY created_at, id`)).rows as Record<string, unknown>[];
+  const sp = (await db.execute(sql`SELECT session_id, project_id FROM session_projects ORDER BY session_id`)).rows as Record<string, unknown>[];
   return {
     schema: SCHEMA_ID,
     schemaVersion: SCHEMA_VERSION,
@@ -127,6 +132,8 @@ export async function buildExport(): Promise<ExportFile> {
     },
     backupMetadata: backups.map((b) => ({ id: b.id, createdAt: b.createdAt.toISOString(), status: b.status, sizeBytes: b.sizeBytes, kind: b.kind, filePath: b.filePath, message: b.message })),
     kv,
+    projects: proj.map((p) => ({ id: p.id as string, name: p.name as string, client: p.client as string, color: p.color as string, billable: p.billable as boolean, hourlyRate: Number(p.hourly_rate), archived: p.archived as boolean, createdAt: new Date(p.created_at as string).toISOString() })),
+    sessionProjects: sp.map((r) => ({ sessionId: r.session_id as string, projectId: r.project_id as string })),
   };
 }
 
@@ -366,6 +373,7 @@ export async function applyImport(data: ExportFile, mode: "merge" | "replace") {
       await tx.delete(sessions);
       await tx.delete(applications);
       await tx.delete(achievements);
+      await tx.execute(sql`DELETE FROM projects`);
     }
     // Map file application ids -> database ids (identity key is authoritative).
     const idMap = new Map<string, string>();
@@ -429,6 +437,21 @@ export async function applyImport(data: ExportFile, mode: "merge" | "replace") {
       for (const a of ach) {
         if (isObj(a) && typeof a.id === "string" && validTs(a.unlockedAt) && typeof a.xpAwarded === "number")
           await tx.insert(achievements).values({ id: a.id, achievementType: a.id, unlockedAt: new Date(a.unlockedAt), xpAwarded: a.xpAwarded, seen: typeof a.seen === "boolean" ? a.seen : true }).onConflictDoNothing();
+      }
+    }
+    // projects and session assignments (2.0). Existing projects/assignments are never overwritten.
+    if (Array.isArray(data.projects)) {
+      for (const p of data.projects) {
+        if (!isObj(p) || typeof p.id !== "string" || typeof p.name !== "string" || !/^[A-Za-z0-9_-]{1,40}$/.test(p.id)) continue;
+        const color = typeof p.color === "string" && /^#[0-9a-fA-F]{6}$/.test(p.color) ? p.color : "#5b8def";
+        const rate = Number(p.hourlyRate);
+        await tx.execute(sql`INSERT INTO projects (id, name, client, color, billable, hourly_rate, archived, created_at) VALUES (${p.id}, ${String(p.name).slice(0, 40)}, ${String(p.client ?? "").slice(0, 40)}, ${color}, ${p.billable !== false}, ${Number.isFinite(rate) && rate >= 0 ? rate : 0}, ${p.archived === true}, ${validTs(p.createdAt) ? new Date(p.createdAt as string) : new Date()}) ON CONFLICT (id) DO NOTHING`);
+      }
+    }
+    if (Array.isArray(data.sessionProjects)) {
+      for (const a of data.sessionProjects) {
+        if (!isObj(a) || typeof a.sessionId !== "string" || typeof a.projectId !== "string") continue;
+        await tx.execute(sql`INSERT INTO session_projects (session_id, project_id) SELECT ${a.sessionId}, ${a.projectId} WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ${a.sessionId}) AND EXISTS (SELECT 1 FROM projects WHERE id = ${a.projectId}) ON CONFLICT (session_id) DO NOTHING`);
       }
     }
     // internal key/value records (achievement events etc.)

@@ -10,9 +10,35 @@ export type ChangelogEntry = {
   knownIssues: string[];
 };
 
-export const APP_VERSION = "1.1.0";
+export const APP_VERSION = "2.0.0";
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "2.0.0",
+    date: "2026-11-21",
+    label: "Focus, limits, projects and automatic updates",
+    features: [
+      "Focus mode: a calm focus timer with short and long breaks, optional automatic transitions, gentle eye-rest and stretch reminders, and a timer that survives restarts and sleep",
+      "Application limits: daily time limits per application or category with a warning threshold and a notice when the limit is reached. WatchTower only warns you, it never blocks anything",
+      "Weekly screen-time report: a summary of the last completed week with comparison, top applications and categories, delivered once a week as a desktop notification at the day and time you choose",
+      "Productivity classification: mark applications productive, neutral or distracting, see a daily productivity score and track a daily productive-time goal",
+      "Compare periods: this week against last week and this month against last month, with application and category changes, in Statistics and Reports",
+      "Projects and client time reports: create projects with clients, colours and hourly rates, assign sessions from Session details, and export a CSV time report with billable time and estimated amounts",
+      "Automatic theme schedule: pick a daytime and a night-time theme and the times they start",
+      "Theme packs: save, preview, edit and delete named gradient presets, export them as a versioned file and import packs safely",
+      "Update checks against the official GitHub releases: see the new version and its notes, download with progress, verify the SHA-256 checksum and install when you agree",
+      "Windows code-signing support in the build pipeline (a trusted certificate is still required to produce signed files)",
+    ],
+    improvements: [
+      "Applications now has the same period selector as Statistics (Today, Yesterday, This/Last Week, Month, Year, All Time, Custom) and every column follows the chosen period",
+      "Exports and imports now also carry projects and session assignments, limits, productivity choices and saved theme presets",
+      "Numbers on Focus, Limits, Productivity, Projects, Reports and Compare now slide up and update live, just like the rest of WatchTower",
+      "Settings sections glide smoothly from one to the next, with a sliding highlight in the menu, instead of switching instantly",
+      "Redesigned Level and XP card on the Overview and Achievements: one shared glass design with a crest, a gradient progress bar and a thin, soft glow when you hover it, in every theme",
+    ],
+    fixes: [],
+    knownIssues: ["Windows builds are not code-signed unless a trusted certificate is supplied at build time; SmartScreen may warn on first launch.", "The portable build cannot replace itself; it opens the release page instead."],
+  },
   {
     version: "1.1.0",
     date: "2026-11-20",

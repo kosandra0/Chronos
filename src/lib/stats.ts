@@ -239,30 +239,49 @@ const APP_SORTS: Record<string, string> = {
   count: "cnt DESC",
 };
 
-export async function listApps(p: { q?: string; sort?: string; category?: string }) {
+export async function listApps(p: { q?: string; sort?: string; category?: string; range?: DateRange }) {
   const order = sql.raw(APP_SORTS[p.sort ?? "most"] ?? APP_SORTS.most);
+  const range: DateRange = p.range ?? { from: null, to: null };
+  const restricted = !!(range.from || range.to);
+  const tz = await getTz();
+  const { fromLocal, toLocal } = bounds(range);
+  // Same local-midnight boundaries as getSlices(): a session crossing a boundary only counts the part inside the range.
+  const lo = sql`(${fromLocal}::timestamp AT TIME ZONE ${tz})`;
+  const hi = sql`(${toLocal}::timestamp AT TIME ZONE ${tz})`;
+  const cs = sql`GREATEST(s.start_time, ${lo})`;
+  const ce = sql`LEAST(${endExpr()}, ${hi})`;
+  const clipped = sql`(EXTRACT(EPOCH FROM (${ce} - ${cs})) * 1000)`;
   const conds: SQL[] = [];
   if (p.q) {
     const like = `%${p.q}%`;
     conds.push(sql`(a.name ILIKE ${like} OR a.executable_name ILIKE ${like} OR a.executable_path ILIKE ${like})`);
   }
   if (p.category && p.category !== "all") conds.push(sql`a.category = ${p.category}`);
+  if (restricted) conds.push(sql`COALESCE(x.total, 0) > 0`);
   const where = conds.length ? sql`WHERE ${sql.join(conds, sql` AND `)}` : sql``;
   const list = await rows<Record<string, unknown>>(sql`
     SELECT a.id, a.name, a.executable_name, a.executable_path, a.category, a.category_overridden, a.detection_status, a.elevated, a.first_seen, a.last_seen,
-      COALESCE(x.total, 0)::bigint AS total, COALESCE(x.cnt, 0)::int AS cnt, x.longest, x.shortest, x.last_used
+      COALESCE(x.total, 0)::bigint AS total, COALESCE(x.cnt, 0)::int AS cnt, x.longest, x.shortest, x.last_used, x.first_used
     FROM applications a
     LEFT JOIN (
-      SELECT s.application_id, SUM(${dur()}) AS total, COUNT(*) AS cnt, MAX(${dur()}) AS longest, MIN(${dur()}) AS shortest, MAX(${endExpr()}) AS last_used
-      FROM sessions s WHERE s.activity_type = 'app' GROUP BY s.application_id
+      SELECT s.application_id, ROUND(SUM(${clipped}))::bigint AS total,
+        COUNT(*) FILTER (WHERE s.start_time >= ${lo} AND s.start_time < ${hi}) AS cnt,
+        ROUND(MAX(${clipped}))::bigint AS longest, ROUND(MIN(${clipped}))::bigint AS shortest,
+        MAX(${ce}) AS last_used, MIN(${cs}) AS first_used
+      FROM sessions s
+      WHERE s.activity_type = 'app' AND s.start_time < ${hi} AND (s.is_open OR s.end_time > ${lo})
+      GROUP BY s.application_id
     ) x ON x.application_id = a.id
     ${where}
     ORDER BY ${order}, a.id
   `);
-  const grand = await rows<{ t: string }>(sql`SELECT COALESCE(SUM(${dur()}), 0)::bigint AS t FROM sessions s WHERE s.activity_type IN ('app','desktop')`);
+  const grand = await rows<{ t: string }>(sql`
+    SELECT COALESCE(ROUND(SUM(${clipped})), 0)::bigint AS t FROM sessions s
+    WHERE s.activity_type IN ('app','desktop') AND s.start_time < ${hi} AND (s.is_open OR s.end_time > ${lo})`);
   const grandTotal = Number(grand[0]?.t ?? 0);
   return {
     grandTotal,
+    range,
     apps: list.map((a) => ({
       id: a.id as string,
       name: a.name as string,
@@ -272,7 +291,8 @@ export async function listApps(p: { q?: string; sort?: string; category?: string
       categoryOverridden: a.category_overridden as boolean,
       detectionStatus: a.detection_status as string,
       elevated: a.elevated as boolean,
-      firstSeen: new Date(a.first_seen as string).toISOString(),
+      // In a restricted period "first observed" is the first activity inside that period; all-time keeps the lifetime value.
+      firstSeen: new Date((restricted && a.first_used ? a.first_used : a.first_seen) as string).toISOString(),
       lastSeen: new Date(a.last_seen as string).toISOString(),
       total: Number(a.total),
       sessions: Number(a.cnt),

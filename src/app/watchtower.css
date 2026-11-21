@@ -200,3 +200,62 @@ html[data-speed="snappy"] .roll.odo .strip { transition-duration: 0.5s; }
 .logo-tile:hover { transform: translateY(-2px); }
 .logo-tile.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
 .logo-stage { height: 112px; display: grid; place-items: center; border-radius: calc(var(--radius) - 6px); background: color-mix(in srgb, var(--bg2) 70%, transparent); margin-bottom: 8px; }
+
+/* Settings menu: the highlight pill slides between sections (framer-motion layoutId) */
+.set-nav .nav-item.active { background: none; }
+.set-nav .nav-item.active::before { display: none; }
+.set-nav .nav-item > svg, .set-nav .nav-item > span:not(.nav-bg):not(.nav-bar) { position: relative; z-index: 1; }
+@media (max-width: 860px) { .set-nav .nav-item.active { background: color-mix(in srgb, var(--accent) 15%, transparent); } .set-nav .nav-bg, .set-nav .nav-bar { display: none; } }
+
+/* ------------------------------------------------------------------------------------------------
+   Level / XP card (Overview + Achievements): glass surface, delicate gradient hairline, soft hover glow.
+   Everything derives from theme variables, so it follows every built-in theme and the custom gradient.
+   ------------------------------------------------------------------------------------------------ */
+.lvx { position: relative; overflow: hidden; border-radius: calc(var(--radius) + 6px); padding: 18px 22px; isolation: isolate;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 9%, var(--card)), color-mix(in srgb, var(--text) 3%, var(--card)));
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 9%, transparent), 0 12px 32px -22px rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
+html[data-motion="on"] .lvx { transition: border-color 0.35s ease, box-shadow 0.4s ease, transform 0.35s var(--ease); }
+/* thin gradient hairline around the card */
+.lvx::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: -1;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 60%, transparent), transparent 38%, transparent 62%, color-mix(in srgb, var(--accent) 38%, transparent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0.45; }
+html[data-motion="on"] .lvx::before { transition: opacity 0.4s ease; }
+/* a faint light line along the top edge */
+.lvx::after { content: ""; position: absolute; left: 14%; right: 14%; top: 0; height: 1px; pointer-events: none; opacity: 0.55;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 70%, var(--text)), transparent); }
+.lvx:hover, .lvx:focus-within { border-color: color-mix(in srgb, var(--accent) 52%, var(--border));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 12%, transparent), 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 26px -8px color-mix(in srgb, var(--accent) 48%, transparent), 0 16px 36px -22px rgba(0, 0, 0, 0.75); }
+.lvx:hover::before, .lvx:focus-within::before { opacity: 1; }
+html[data-motion="on"] .lvx:hover { transform: translateY(-1px); }
+
+.lvx-row { display: flex; align-items: center; gap: 18px; }
+.lvx-div { align-self: stretch; width: 1px; margin: 4px 0; flex: none; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent) 35%, var(--border)), transparent); }
+.lvx-main { flex: 1; min-width: 0; }
+.lvx-name { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 1.12rem; letter-spacing: 0.005em; }
+.lvx-full .lvx-name { font-size: 1.4rem; }
+.lvx-xp { margin-top: 3px; font-size: 0.92rem; }
+.lvx-bar { height: 8px; border-radius: 99px; margin-top: 12px; background: color-mix(in srgb, var(--text) 9%, transparent); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25); }
+.lvx-bar > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #b9a2ff)); box-shadow: 0 0 12px -2px color-mix(in srgb, var(--accent) 65%, transparent); transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+html[data-motion="off"] .lvx-bar > i { transition: none; }
+.lvx-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; font-size: 0.76rem; flex-wrap: wrap; }
+
+.lvx-badge { position: relative; flex: none; animation: unlock 0.7s var(--ease); filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent) 22%, transparent)); }
+html[data-motion="off"] .lvx-badge { animation: none; }
+.lvx-badge svg { display: block; }
+.lvx-badge-txt { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding-top: 6%; }
+.lvx-lvl { font-size: 0.56rem; letter-spacing: 0.16em; color: var(--text2); }
+.lvx-num { font-size: 1.7rem; font-weight: 650; color: var(--text); }
+.lvx-full .lvx-num { font-size: 1.95rem; }
+
+.lvx-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem; color: var(--text2); flex: none; }
+.lvx-facts li { display: flex; align-items: center; gap: 10px; }
+.lvx-fi { display: inline-flex; color: var(--accent); opacity: 0.9; }
+.lvx-footer { margin-top: 14px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border)); }
+.lvx-footer .set-row { border: 0; padding: 0; }
+
+@media (max-width: 900px) { .lvx-full .lvx-row { flex-wrap: wrap; } .lvx-full .lvx-div:last-of-type { display: none; } .lvx-facts { flex-direction: row; flex-wrap: wrap; gap: 8px 18px; } }
+@media (max-width: 560px) { .lvx { padding: 14px; } .lvx-row { gap: 12px; } .lvx-div { display: none; } .lvx-badge { transform: scale(0.88); transform-origin: left center; } }

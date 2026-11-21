@@ -7,6 +7,7 @@ import { getDesktop } from "@/lib/desktop";
 import { DEFAULT_SETTINGS, customThemeVars, type ChronosSettings } from "@/lib/settings-shared";
 import { ymd, addDays, resolvePreset } from "@/lib/ranges";
 import { formatShort } from "@/lib/time";
+import { scheduledTheme } from "@/lib/v2/schedule";
 import type { StatsResult, SessionRow } from "@/lib/stats";
 
 // ---------------- Settings ----------------
@@ -79,9 +80,10 @@ const CUSTOM_VARS = ["--bg", "--bg2", "--card", "--elev", "--text", "--text2", "
 function applyAppearance(s: ChronosSettings) {
   const d = document.documentElement;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const theme = s.theme === "system" ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : s.theme;
+  const base = scheduledTheme({ enabled: s.themeScheduleEnabled, dayTheme: s.themeDay, nightTheme: s.themeNight, dayStart: s.themeDayStart, nightStart: s.themeNightStart }, new Date()) ?? s.theme;
+  const theme = base === "system" ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : s.theme;
   const perf = s.performanceMode === "performance";
-  d.dataset.theme = theme;
+  if (d.dataset.theme !== theme) d.dataset.theme = theme; // unchanged theme: no attribute write, no repaint
   // The custom gradient theme is driven by inline CSS variables; they are removed again for every other theme.
   for (const name of CUSTOM_VARS) d.style.removeProperty(name);
   d.style.colorScheme = "";
@@ -148,10 +150,17 @@ export function Providers({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (ready) applyAppearance(settings);
+    // Automatic theme schedule: re-evaluated every 30 s; the DOM is only touched when the scheduled theme actually changes.
+    const sched = setInterval(() => {
+      const s = settingsRef.current;
+      if (!s.themeScheduleEnabled) return;
+      const want = scheduledTheme({ enabled: true, dayTheme: s.themeDay, nightTheme: s.themeNight, dayStart: s.themeDayStart, nightStart: s.themeNightStart }, new Date());
+      if (want && document.documentElement.dataset.theme !== want) applyAppearance(s);
+    }, 30000);
     const mq = matchMedia("(prefers-color-scheme: light)");
     const h = () => settingsRef.current.theme === "system" && applyAppearance(settingsRef.current);
     mq.addEventListener("change", h);
-    return () => mq.removeEventListener("change", h);
+    return () => { mq.removeEventListener("change", h); clearInterval(sched); };
   }, [settings, ready]);
 
   const update = useCallback(

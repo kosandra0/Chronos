@@ -195,6 +195,19 @@ export type ChronosSettings = {
   notifyBackupOk: boolean;
   notifyBackupFail: boolean;
   gamificationNotify: boolean;
+  // 2.0: limits, reports, productivity, scheduling, updates
+  limitNotifications: boolean;
+  weeklyReportEnabled: boolean;
+  weeklyReportDay: number; // 0 = Sunday .. 6 = Saturday
+  weeklyReportTime: string; // HH:MM local
+  productivityGoalHours: number;
+  currency: string;
+  themeScheduleEnabled: boolean;
+  themeDay: string;
+  themeNight: string;
+  themeDayStart: string;
+  themeNightStart: string;
+  updateAutoCheck: boolean;
 };
 
 export const DEFAULT_SETTINGS: ChronosSettings = {
@@ -246,6 +259,18 @@ export const DEFAULT_SETTINGS: ChronosSettings = {
   notifyBackupOk: true,
   notifyBackupFail: true,
   gamificationNotify: true,
+  limitNotifications: true,
+  weeklyReportEnabled: true,
+  weeklyReportDay: 1,
+  weeklyReportTime: "09:00",
+  productivityGoalHours: 4,
+  currency: "USD",
+  themeScheduleEnabled: false,
+  themeDay: "light",
+  themeNight: "obsidian",
+  themeDayStart: "07:00",
+  themeNightStart: "19:00",
+  updateAutoCheck: true,
 };
 
 export const BACKUP_FREQ_MS: Record<ChronosSettings["backupFrequency"], number> = {
@@ -261,6 +286,11 @@ export const NAV = [
   { href: "/applications", label: "Applications", icon: "applications" },
   { href: "/sessions", label: "Sessions", icon: "sessions" },
   { href: "/timeline", label: "Timeline", icon: "timeline" },
+  { href: "/focus", label: "Focus", icon: "focus" },
+  { href: "/limits", label: "Limits", icon: "limits" },
+  { href: "/productivity", label: "Productivity", icon: "productivity" },
+  { href: "/projects", label: "Projects", icon: "projects" },
+  { href: "/reports", label: "Reports", icon: "reports" },
   { href: "/achievements", label: "Achievements", icon: "achievements" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ] as const;

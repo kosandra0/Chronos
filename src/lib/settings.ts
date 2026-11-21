@@ -2,6 +2,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { settings } from "@/db/schema";
 import { DEFAULT_SETTINGS, LOGOS, type ChronosSettings } from "./settings-shared";
+import { isCurrency } from "./v2/billing";
+import { parseHM } from "./v2/schedule";
 
 const g = globalThis as typeof globalThis & { __chronosSettingsCache?: { at: number; value: ChronosSettings } | null };
 
@@ -43,6 +45,14 @@ export async function updateSettings(partial: Record<string, unknown>): Promise<
     if (k === "userName") val = String(v).replace(/\s+/g, " ").trim().slice(0, 40);
     if (k === "radius") val = Math.min(24, Math.max(0, Math.round(Number(v))));
     if (k === "dailyGoalHours") val = Math.min(24, Math.max(0, Math.round(Number(v) * 2) / 2));
+    if (k === "weeklyReportDay") val = Math.min(6, Math.max(0, Math.round(Number(v))));
+    if (k === "weeklyReportTime" || k === "themeDayStart" || k === "themeNightStart") {
+      if (parseHM(v) === null) continue;
+      val = String(v).trim().padStart(5, "0");
+    }
+    if (k === "productivityGoalHours") val = Math.min(24, Math.max(0, Math.round(Number(v) * 2) / 2));
+    if (k === "currency" && !isCurrency(v)) continue;
+    if ((k === "themeDay" || k === "themeNight") && !/^[a-z0-9-]{2,30}$/.test(String(v))) continue;
     const value = JSON.stringify(val);
     await db.insert(settings).values({ key: k, value }).onConflictDoUpdate({ target: settings.key, set: { value } });
   }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { Award, Check, Lock } from "lucide-react";
+import { Award, BarChart3, CalendarDays, Check, Clock, Lock } from "lucide-react";
 import { Card, ErrorBox, PageHeader, Skeleton, Switch, useFetch } from "@/components/ui";
 import { useSettings } from "@/components/Providers";
+import { LevelPanel } from "@/components/LevelPanel";
 import { fmtDateTime, formatShort } from "@/lib/time";
 
 type Prog = {
@@ -27,31 +28,24 @@ export default function AchievementsPage() {
   return (
     <div className="page">
       <PageHeader title="Achievements" subtitle="Quiet milestones for understanding your habits. XP is finite — leaving the computer running earns nothing." />
-      <Card style={{ marginBottom: "var(--gap)" }}>
-        <div className="flex flex-wrap items-center gap-6">
-          <div key={l.level} className="unlock" style={{ width: 84, height: 84, borderRadius: 24, display: "grid", placeItems: "center", background: "color-mix(in srgb, var(--accent) 16%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 50%, transparent)" }}>
-            <div style={{ textAlign: "center" }}>
-              <div className="faint" style={{ fontSize: "0.65rem", letterSpacing: "0.12em" }}>LEVEL</div>
-              <div className="num" style={{ fontSize: "2rem", fontWeight: 650, lineHeight: 1, color: "var(--accent)" }}>{l.level}</div>
+      <div style={{ marginBottom: "var(--gap)" }}>
+        <LevelPanel
+          variant="full"
+          level={l}
+          xp={data.xp}
+          facts={[
+            { icon: <BarChart3 size={17} />, text: `${data.stats.sessions.toLocaleString()} sessions · ${data.stats.apps} apps` },
+            { icon: <CalendarDays size={17} />, text: `${data.stats.usageDays} usage days · ${data.stats.streak}-day best streak` },
+            { icon: <Clock size={17} />, text: `${formatShort(data.stats.totalMs)} active recorded` },
+          ]}
+          footer={
+            <div className="set-row">
+              <div><div className="t">Gamification notifications</div><div className="d">Show a quiet toast when an achievement unlocks or you reach a new level.</div></div>
+              <Switch on={settings.gamificationNotify} onChange={(v) => update({ gamificationNotify: v })} label="Gamification notifications" />
             </div>
-          </div>
-          <div style={{ flex: "1 1 280px" }}>
-            <div style={{ fontSize: "1.35rem", fontWeight: 650 }}>{l.name}</div>
-            <div className="muted num" style={{ margin: "4px 0 12px" }}>{data.xp} XP total · {l.toNext} XP to level {l.level + 1}</div>
-            <div className="progress"><i style={{ width: `${Math.round(l.progress * 100)}%` }} /></div>
-            <div className="flex justify-between faint num" style={{ fontSize: "0.78rem", marginTop: 6 }}><span>{l.currentFloor} XP</span><span>{l.nextAt} XP</span></div>
-          </div>
-          <div className="muted" style={{ fontSize: "0.88rem", lineHeight: 1.7 }}>
-            <div>{data.stats.sessions} sessions · {data.stats.apps} apps</div>
-            <div>{data.stats.usageDays} usage days · {data.stats.streak}-day best streak</div>
-            <div>{formatShort(data.stats.totalMs)} active recorded</div>
-          </div>
-        </div>
-        <div className="set-row" style={{ marginTop: 14, borderTop: "1px solid var(--border)", borderBottom: 0 }}>
-          <div><div className="t">Gamification notifications</div><div className="d">Show a quiet toast when an achievement unlocks or you reach a new level.</div></div>
-          <Switch on={settings.gamificationNotify} onChange={(v) => update({ gamificationNotify: v })} label="Gamification notifications" />
-        </div>
-      </Card>
+          }
+        />
+      </div>
       <div className="grid g2">
         <Card title={`Recent achievements · ${unlocked.length}`}>
           {unlocked.length ? unlocked.map((a) => (

@@ -51,7 +51,7 @@ function isolateBundle(sourceDir) {
   return { root, dest };
 }
 
-function startServer(serverDir, dataDir, port) {
+function startServer(serverDir, dataDir, port, extraEnv = {}) {
   const output = [];
   const child = spawn(process.execPath, ['server.js'], {
     cwd: serverDir,
@@ -63,6 +63,7 @@ function startServer(serverDir, dataDir, port) {
       HOSTNAME: '127.0.0.1',
       WATCHTOWER_DATA_DIR: dataDir,
       WATCHTOWER_DB_DIR: path.join(dataDir, 'database'),
+      ...extraEnv,
     },
   });
   const state = { child, output, exited: false, code: null };

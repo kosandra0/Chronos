@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { AnimatePresence, motion as fm } from "framer-motion";
 import { Archive, Bell, Cpu, Database, Download, FileUp, Info, Monitor, Palette, Settings2, ShieldCheck, Upload } from "lucide-react";
 import { useLive, useSettings, useToast } from "@/components/Providers";
 import { Card, Empty, ErrorBox, Modal, PageHeader, Seg, SettingRow, Skeleton, Switch, useFetch } from "@/components/ui";
@@ -11,6 +12,7 @@ import { getDesktop } from "@/lib/desktop";
 import { fireEvent } from "@/lib/events";
 import { fmtBytes, fmtDateTime, formatShort } from "@/lib/time";
 import { Select } from "@/components/Select";
+import { ThemePacks, ThemeSchedule, UpdatesPanel } from "@/components/V2Settings";
 
 type Tab = "general" | "monitoring" | "appearance" | "performance" | "data" | "backups" | "notifications" | "importexport" | "about";
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
@@ -27,6 +29,7 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>("general");
+  const { motion: mo } = useSettings();
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tab") as Tab | null;
     if (t && TABS.some((x) => x.id === t)) setTab(t);
@@ -38,21 +41,39 @@ export default function SettingsPage() {
         <nav className="set-nav" aria-label="Settings sections">
           {TABS.map((t) => (
             <button key={t.id} className={`nav-item ${tab === t.id ? "active" : ""}`} style={{ height: 38 }} onClick={() => setTab(t.id)} aria-current={tab === t.id ? "page" : undefined}>
+              {tab === t.id && mo.page && (
+                <>
+                  <fm.span layoutId="set-nav-bg" className="nav-bg" transition={{ type: "spring", stiffness: 420, damping: 36 }} />
+                  <fm.span layoutId="set-nav-bar" className="nav-bar" style={{ left: -2 }} transition={{ type: "spring", stiffness: 420, damping: 36 }} />
+                </>
+              )}
               {t.icon}
               <span>{t.label}</span>
             </button>
           ))}
         </nav>
         <div style={{ minWidth: 0 }}>
-          {tab === "general" && <General />}
-          {tab === "monitoring" && <Monitoring />}
-          {tab === "appearance" && <Appearance />}
-          {tab === "performance" && <Performance />}
-          {tab === "data" && <DataStorage />}
-          {tab === "backups" && <Backups />}
-          {tab === "notifications" && <Notifications />}
-          {tab === "importexport" && <ImportExport />}
-          {tab === "about" && <About />}
+          {/* Each section fades and glides in; the previous one fades out first, so switching never snaps. */}
+          <AnimatePresence mode="wait" initial={false}>
+            <fm.div
+              key={tab}
+              data-testid="settings-panel"
+              initial={mo.page ? { opacity: 0, y: 16 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              exit={mo.page ? { opacity: 0, y: -10 } : { opacity: 0 }}
+              transition={{ duration: mo.page ? 0.28 : 0, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {tab === "general" && <General />}
+              {tab === "monitoring" && <Monitoring />}
+              {tab === "appearance" && <Appearance />}
+              {tab === "performance" && <Performance />}
+              {tab === "data" && <DataStorage />}
+              {tab === "backups" && <Backups />}
+              {tab === "notifications" && <Notifications />}
+              {tab === "importexport" && <ImportExport />}
+              {tab === "about" && <About />}
+            </fm.div>
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -243,6 +264,8 @@ function Appearance() {
         </div>
         {settings.theme === "custom" && <GradientEditor />}
       </div>
+      <ThemeSchedule />
+      <ThemePacks />
       <div className="set-block">
         <div className="t">App logo</div>
         <div className="d">Five live 3D watchtowers. Your choice is used everywhere: the sidebar, tray, taskbar, Start menu shortcuts and the launcher file.</div>
@@ -593,6 +616,8 @@ function About() {
       <AboutPanel />
       <div style={{ marginTop: 16 }}><button className="btn" onClick={() => setOpen(true)}>View update logs</button></div>
       <ChangelogModal open={open} onClose={() => setOpen(false)} />
+      <div className="cl-section-title" style={{ marginTop: 22 }}>Updates</div>
+      <UpdatesPanel />
       <div className="faint" style={{ marginTop: 14, fontSize: "0.8rem" }}></div>
     </Card>
   );

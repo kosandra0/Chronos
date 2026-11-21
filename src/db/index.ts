@@ -100,6 +100,24 @@ export async function initializeDatabase(): Promise<void> {
           kind text NOT NULL DEFAULT 'manual',
           message text
         );
+        -- 2.0 additive migration: projects and session assignments (no existing table is altered)
+        CREATE TABLE IF NOT EXISTS projects (
+          id text PRIMARY KEY,
+          name text NOT NULL,
+          client text NOT NULL DEFAULT '',
+          color text NOT NULL DEFAULT '#5b8def',
+          billable boolean NOT NULL DEFAULT true,
+          hourly_rate double precision NOT NULL DEFAULT 0,
+          archived boolean NOT NULL DEFAULT false,
+          created_at timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE TABLE IF NOT EXISTS session_projects (
+          session_id text PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE,
+          project_id text NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          assigned_at timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE INDEX IF NOT EXISTS session_projects_project_idx ON session_projects (project_id);
+        INSERT INTO settings (key, value) VALUES ('db.schemaVersion', '2') ON CONFLICT (key) DO NOTHING;
       `);
       globalForDb.__chronosPGliteReady = true;
     })();

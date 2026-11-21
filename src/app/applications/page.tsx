@@ -9,6 +9,8 @@ import { usePersisted } from "@/lib/persist";
 import { formatDetailed, formatHMS, formatPct, fmtDateTime } from "@/lib/time";
 import { Odometer } from "@/components/AnimText";
 import { Select } from "@/components/Select";
+import { RangePicker, useRangeState } from "@/components/RangePicker";
+import { rangeQuery } from "@/lib/ranges";
 
 type AppRow = {
   id: string; name: string; exe: string; path: string | null; category: string; detectionStatus: string; elevated: boolean;
@@ -21,8 +23,10 @@ export default function ApplicationsPage() {
   const [q, setQ] = usePersisted("apps.q", "");
   const [sort, setSort] = usePersisted("apps.sort", "most");
   const [category, setCategory] = usePersisted("apps.category", "all");
+  // Same period selector and persistence as Statistics (own key, so each menu remembers its own period).
+  const [rs, setRs] = useRangeState("all", "apps.range");
   const dq = useDebounced(q);
-  const { data, error, loading, reload } = useFetch<{ apps: AppRow[]; grandTotal: number }>(`/api/apps?q=${encodeURIComponent(dq)}&sort=${sort}&category=${encodeURIComponent(category)}`, { refreshMs: 1000 });
+  const { data, error, loading, reload } = useFetch<{ apps: AppRow[]; grandTotal: number }>(`/api/apps?q=${encodeURIComponent(dq)}&sort=${sort}&category=${encodeURIComponent(category)}&${rangeQuery(rs.range)}`, { refreshMs: 1000 });
 
   return (
     <div className="page">
@@ -46,6 +50,7 @@ export default function ApplicationsPage() {
         </Select>
         {data && <span className="muted">{data.apps.length} application{data.apps.length === 1 ? "" : "s"}</span>}
       </div>
+      <div style={{ marginBottom: 16 }}><RangePicker state={rs} onChange={setRs} /></div>
       {error && <ErrorBox message={error} onRetry={reload} />}
       <Card style={{ padding: 0 }}>
         {loading && !data ? (
@@ -83,7 +88,7 @@ export default function ApplicationsPage() {
             </table>
           </div>
         ) : (
-          <Empty icon={<AppWindow size={20} />} title={dq || category !== "all" ? "No applications match your filters" : "No applications recorded yet"} text={dq || category !== "all" ? "Try a different search term or category." : "Your application history will appear here once WatchTower observes foreground usage."} />
+          <Empty icon={<AppWindow size={20} />} title={dq || category !== "all" ? "No applications match your filters" : rs.preset !== "all" ? "No application activity in this period" : "No applications recorded yet"} text={dq || category !== "all" ? "Try a different search term, category or period." : rs.preset !== "all" ? "Select a different period to see more applications." : "Your application history will appear here once WatchTower observes foreground usage."} />
         )}
       </Card>
     </div>

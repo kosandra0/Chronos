@@ -45,7 +45,7 @@ npm run desktop:package        # build + desktop:clean + installer + portable
 npm run desktop:dir            # faster: only release\win-unpacked
 npm test                       # package-resource and server-runtime tests (needs desktop:dir/desktop:package first)
 npm run test:packaged          # launches the packaged app end-to-end in a temporary data directory
-node scripts/verify-packaged.cjs release\WatchTower-Portable-1.1.0-x64.exe   # same checks against another exe
+node scripts/verify-packaged.cjs release\WatchTower-Portable-2.0.0-x64.exe   # same checks against another exe
 ```
 
 ### Packaging note (the v0.1.0 startup bug)
@@ -73,3 +73,21 @@ Setting the `WATCHTOWER_DATA_DIR` environment variable to an absolute path reloc
 - The packages are not code-signed; Windows SmartScreen may warn on first launch.
 - The monitor runs while WatchTower is open; an always-on Windows service is not included.
 - UAC secure desktop, protected processes and sign-in screens expose limited process metadata; WatchTower reports this rather than bypassing Windows security.
+
+## Code signing (optional)
+
+`electron-builder` signs the application, the installer and the portable executable automatically when a **trusted** code-signing certificate is available. Provide it only through environment variables (never commit a certificate or a password):
+
+| Variable | Meaning |
+| --- | --- |
+| `CSC_LINK` | path, https URL or base64 of the `.pfx` / `.p12` certificate |
+| `CSC_KEY_PASSWORD` | the certificate password |
+| `CSC_NAME` | alternatively, the subject name of a certificate already installed in the Windows certificate store |
+
+- `npm run sign:status` reports whether signing is configured (it never prints secrets).
+- `node scripts/signing-status.cjs --check release\*.exe` reports the Authenticode state of the built files (`--require-signed` makes unsigned files an error).
+- Without a certificate the build is produced **unsigned**. A self-signed certificate does not create a trusted publisher and is not used. Even a validly signed build does not guarantee instant SmartScreen reputation.
+
+## Regenerating the README logo animation
+
+`node scripts/make-logo-animation.cjs [variant] [outFile]` renders `docs/images/watchtower-logo-rotating.webp` from the same 3D scene as the app (needs Microsoft Edge or Chrome installed).

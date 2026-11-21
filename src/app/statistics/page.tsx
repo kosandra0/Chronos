@@ -12,6 +12,7 @@ import { formatDetailed, formatHMS, formatPct, formatShort, fmtDate } from "@/li
 import type { StatsResult } from "@/lib/stats";
 import { AnimText, Ms } from "@/components/AnimText";
 import { HeatmapView } from "@/components/HeatmapView";
+import { CompareView } from "@/components/V2Parts";
 
 function S({ label, value, sub, title }: { label: string; value: string; sub?: string; title?: string }) {
   return (
@@ -26,7 +27,8 @@ const dash = (n: number | null | undefined) => (n === null || n === undefined ? 
 
 export default function StatisticsPage() {
   const [rs, setRs] = useRangeState("thisWeek", "stats.range");
-  const [tab, setTab] = usePersisted<"overview" | "heatmap">("stats.tab", "overview");
+  const [tab, setTab] = usePersisted<"overview" | "heatmap" | "compare">("stats.tab", "overview");
+  const [cmpKind, setCmpKind] = usePersisted<"week" | "month">("stats.compare", "week");
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("tab") === "heatmap") setTab("heatmap");
   }, []);
@@ -56,9 +58,10 @@ export default function StatisticsPage() {
       <PageHeader
         title="Statistics"
         subtitle="Every figure is calculated from your recorded sessions and updates live."
-        actions={<Seg<"overview" | "heatmap"> value={tab} onChange={setTab} options={[{ id: "overview", label: "Overview" }, { id: "heatmap", label: "Heat Map" }]} />}
+        actions={<Seg<"overview" | "heatmap" | "compare"> value={tab} onChange={setTab} options={[{ id: "overview", label: "Overview" }, { id: "heatmap", label: "Heat Map" }, { id: "compare", label: "Compare" }]} />}
       />
       {tab === "heatmap" && <HeatmapView />}
+      {tab === "compare" && (<div className="flex flex-col gap-4"><Seg<"week" | "month"> value={cmpKind} onChange={setCmpKind} options={[{ id: "week", label: "This week vs last week" }, { id: "month", label: "This month vs last month" }]} /><CompareView kind={cmpKind} /></div>)}
       {tab === "overview" && (<>
       <RangePicker state={rs} onChange={setRs} />
       <div style={{ height: 20 }} />
