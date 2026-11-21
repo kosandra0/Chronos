@@ -123,8 +123,8 @@ test('level card, sliding numbers and settings transitions in the real window', 
   const first = await c.eval(`document.querySelector('[data-testid="settings-panel"]').innerText.slice(0, 40)`);
   // sample the panel's opacity right after the click: a transition produces intermediate values, an instant switch never does
   await c.eval(`window.__ops = []; window.__sampler = setInterval(() => { const p = document.querySelector('[data-testid="settings-panel"]'); if (p) window.__ops.push(+getComputedStyle(p).opacity); }, 16); true`);
-  assert.ok(await c.click(`() => [...document.querySelectorAll('.set-nav button')].find((b) => b.textContent.trim() === 'Appearance')`));
-  await c.until(`document.body.innerText.includes('App logo')`, 'Appearance content'); await sleep(500);
+  assert.ok(await c.click(`() => [...document.querySelectorAll('.set-nav button')].find((b) => b.textContent.trim() === 'Performance')`)); // a light tab: Appearance renders five live WebGL logos, too heavy for software rendering on CI
+  await c.until(`/enhanced visual/i.test(document.body.innerText)`, 'Performance content'); await sleep(500);
   const ops = await c.eval(`clearInterval(window.__sampler); window.__ops`);
   const mid = ops.filter((x) => x > 0.03 && x < 0.97);
   if (motionOn) assert.ok(mid.length >= 4, `the switch passes through intermediate opacities (${mid.length} samples of ${ops.length}): ${ops.filter((_, i) => i % 3 === 0).map((x) => x.toFixed(2)).join(' ')}`);
