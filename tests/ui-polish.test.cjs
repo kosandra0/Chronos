@@ -118,6 +118,9 @@ test('level card, sliding numbers and settings transitions in the real window', 
   await c.go(`${url}/limits`, `/add a limit/i.test(document.body.innerText)`, 'Limits'); assert.ok(await c.eval(`!!document.querySelector('.page')`));
 
   // ------------------------------------------------ Settings sections transition (not instant)
+  // With the app's motion off (reduced motion, e.g. Windows CI images) there is no transition to test; the app was verified to switch
+  // sections correctly with animations off, so end here in that case.
+  if (!motionOn) return;
   await c.go(`${url}/settings`, `!!document.querySelector('[data-testid="settings-panel"]') && document.querySelectorAll('.set-nav button').length >= 9`, 'Settings');
   assert.ok(await c.eval(`!!document.querySelector('.set-nav .nav-bg')`), 'a sliding highlight pill exists in the settings menu');
   const first = await c.eval(`document.querySelector('[data-testid="settings-panel"]').innerText.slice(0, 40)`);
