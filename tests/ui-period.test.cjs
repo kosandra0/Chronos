@@ -59,7 +59,7 @@ test('Applications period selector in the real window: ten filters, Custom dates
   const child = spawn(exe, [`--remote-debugging-port=${dbgPort}`], { env: { ...process.env, WATCHTOWER_DATA_DIR: dataDir }, stdio: 'ignore' });
   let appPid = child.pid;
   t.after(() => { try { execFileSync('taskkill', ['/PID', String(appPid), '/T', '/F'], { stdio: 'ignore' }); } catch { /* already gone */ } });
-  t.after(async () => { await sleep(1500); fs.rmSync(dataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 400 }); });
+  t.after(async () => { await sleep(1500); try { fs.rmSync(dataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 400 }); } catch { /* a scanner may still hold the folder; it is a temp dir, so a failed cleanup must not fail the test */ } });
 
   // wait for the dashboard to be ready and read its local URL from the startup log
   let url = null;

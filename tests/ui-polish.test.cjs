@@ -60,7 +60,7 @@ test('level card, sliding numbers and settings transitions in the real window', 
   const dbg = await h.freePort();
   const child = spawn(exe, [`--remote-debugging-port=${dbg}`], { env: { ...process.env, WATCHTOWER_DATA_DIR: dataDir }, stdio: 'ignore' });
   t.after(() => { try { execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' }); } catch { /* gone */ } });
-  t.after(async () => { await sleep(1500); fs.rmSync(dataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 400 }); });
+  t.after(async () => { await sleep(1500); try { fs.rmSync(dataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 400 }); } catch { /* a scanner may still hold the folder; it is a temp dir, so a failed cleanup must not fail the test */ } });
   let url = null;
   for (let i = 0; i < 240 && !url; i++) { await sleep(500); try { const m = /dashboard ready url=(\S+)/.exec(fs.readFileSync(path.join(dataDir, 'logs', 'watchtower-startup.log'), 'utf8')); if (m) url = m[1]; } catch { /* not yet */ } }
   assert.ok(url, 'app started');
@@ -83,6 +83,8 @@ test('level card, sliding numbers and settings transitions in the real window', 
   assert.equal(ov.radius, ac.radius, 'same corner radius'); assert.notEqual(ov.blur, 'none', 'glass blur is applied'); assert.ok(ov.hasSvg && ac.hasSvg && ov.hasBar && ac.hasBar, 'crest and progress bar present on both');
   assert.equal(ov.num, ac.num, 'same level shown'); assert.match(ov.text, /XP to level \d+/); assert.match(ac.text, /XP total/); assert.match(ov.text, /achievements/); assert.match(ac.text, /sessions/); assert.match(ac.text, /usage days/); assert.match(ac.text, /active recorded/); assert.match(ac.text, /Gamification notifications/);
   // hover glow: border and shadow change smoothly (measure after the transition)
+  // make sure the cursor is NOT over the card first (on CI the real pointer can already rest on it)
+  await c.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 3, y: 3 }); await sleep(1000);
   const before = await c.eval(style('[data-testid="level-panel-full"]'));
   assert.ok(await c.hover(`() => document.querySelector('[data-testid="level-panel-full"]')`)); await sleep(900);
   const after = await c.eval(style('[data-testid="level-panel-full"]'));
